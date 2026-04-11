@@ -7,14 +7,17 @@ import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { CheckCircle, Clock, ArrowLeft, Sparkles, TrendingUp, Images } from "lucide-react";
 
-type Tier = { id: number; plan_slug: string; tier_slug: string; label: string; duration_days: number; price: number };
+type Tier = { id: number; plan_slug: string; tier_slug: string; label: string; duration_days: number; price: number | string };
 type Plan = { id: number; slug: string; name: string; badge_label: string; badge_color: string; description: string; tiers: Tier[] };
+
+const toNum = (v: number | string | undefined) => Number(v ?? 0);
 
 export default function BoostPage() {
   const { profileId } = useParams();
   const [, nav] = useLocation();
   const { user, loading: authLoading } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [plansError, setPlansError] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [selectedTier, setSelectedTier] = useState<string>("1w");
   const [addonGallery, setAddonGallery] = useState(false);
@@ -28,7 +31,10 @@ export default function BoostPage() {
 
   useEffect(() => {
     if (!user) return;
-    api.getBoostPlans().then(setPlans).catch(() => {});
+    api.getBoostPlans().then(data => {
+      setPlans(data);
+      setPlansError(false);
+    }).catch(() => setPlansError(true));
     api.getMyProfiles().then((profiles: any[]) => {
       const p = profiles.find(x => String(x.id) === String(profileId));
       if (!p) nav("/dashboard");
@@ -47,8 +53,8 @@ export default function BoostPage() {
 
   const selectedTopAdTier = tiers.find(t => t.tier_slug === selectedTier);
   const selectedGalleryTier = galleryTiers.find(t => t.tier_slug === selectedTier);
-  const topAdPrice = selectedTopAdTier?.price ?? 0;
-  const galleryPrice = addonGallery ? (selectedGalleryTier?.price ?? 0) : 0;
+  const topAdPrice = toNum(selectedTopAdTier?.price);
+  const galleryPrice = addonGallery ? toNum(selectedGalleryTier?.price) : 0;
   const totalPrice = topAdPrice + galleryPrice;
 
   const handleSubmit = async () => {
@@ -68,6 +74,23 @@ export default function BoostPage() {
   };
 
   if (authLoading || !profile) return null;
+
+  if (plansError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-lg mx-auto px-4 py-16 text-center">
+          <p className="text-red-600 font-semibold mb-3">Could not load boost plans.</p>
+          <p className="text-gray-500 text-sm mb-5">Please check your connection and try again.</p>
+          <button onClick={() => { setPlansError(false); api.getBoostPlans().then(data => { setPlans(data); setPlansError(false); }).catch(() => setPlansError(true)); }}
+            className="bg-rose-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-rose-700">
+            Retry
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -155,6 +178,13 @@ export default function BoostPage() {
           {/* Validity selector */}
           <div className="mb-2">
             <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Select Validity</p>
+            {tiers.length === 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {["1 Week", "2 Weeks", "1 Month"].map(l => (
+                  <div key={l} className="border-2 border-gray-100 rounded-xl p-3 text-center animate-pulse bg-gray-50 h-16" />
+                ))}
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-2">
               {tiers.map(tier => (
                 <button
@@ -172,7 +202,7 @@ export default function BoostPage() {
                     </div>
                   )}
                   <div className="text-xs text-gray-500 mb-0.5">{tier.label}</div>
-                  <div className="font-extrabold text-gray-900 text-lg">₹{tier.price}</div>
+                  <div className="font-extrabold text-gray-900 text-lg">₹{toNum(tier.price)}</div>
                   {selectedTier === tier.tier_slug && (
                     <CheckCircle size={14} className="text-rose-500 mx-auto mt-1" />
                   )}
@@ -199,7 +229,7 @@ export default function BoostPage() {
                   <h3 className="font-bold text-gray-900">Gallery Boost</h3>
                   <span className="text-xs bg-violet-600 text-white font-bold px-2.5 py-0.5 rounded-full">Add-on</span>
                   <span className="text-sm font-bold text-violet-700">
-                    +₹{selectedGalleryTier?.price ?? galleryTiers[0]?.price ?? 0}
+                    +₹{toNum(selectedGalleryTier?.price ?? galleryTiers[0]?.price)}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">Upload 10–20 photos shown in slideshow format. Same validity as main plan.</p>
