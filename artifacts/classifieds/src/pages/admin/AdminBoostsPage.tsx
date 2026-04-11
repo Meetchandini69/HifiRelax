@@ -22,6 +22,8 @@ export default function AdminBoostsPage() {
   const [plans, setPlans] = useState<any[]>([]);
   const [approvedProfiles, setApprovedProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [plansLoading, setPlansLoading] = useState(false);
+  const [plansError, setPlansError] = useState<string | null>(null);
   const [editPlan, setEditPlan] = useState<any>(null);
   const [applyForm, setApplyForm] = useState({ profile_id: "", plan_slug: "", tier_slug: "", addon_gallery: false });
   const [applyLoading, setApplyLoading] = useState(false);
@@ -39,7 +41,11 @@ export default function AdminBoostsPage() {
   };
 
   const loadPlans = () => {
-    api.adminGetBoostPlans().then(setPlans).catch(() => {});
+    setPlansLoading(true);
+    setPlansError(null);
+    api.adminGetBoostPlans()
+      .then(data => { setPlans(data); setPlansLoading(false); })
+      .catch(err => { setPlansError(err.message || "Failed to load plans"); setPlansLoading(false); toast.error("Plans load failed: " + (err.message || "Unknown error")); });
   };
 
   const loadApprovedProfiles = () => {
@@ -390,6 +396,26 @@ export default function AdminBoostsPage() {
 
         {/* ── PLANS TAB ── */}
         {tab === "plans" && (
+          <>
+            {plansLoading && (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {[1, 2].map(i => <div key={i} className="h-40 bg-white rounded-2xl border border-gray-200 animate-pulse" />)}
+              </div>
+            )}
+            {plansError && !plansLoading && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-center">
+                <p className="text-red-600 font-semibold text-sm mb-1">Failed to load plans</p>
+                <p className="text-red-400 text-xs mb-3">{plansError}</p>
+                <button onClick={loadPlans} className="text-xs font-semibold bg-rose-600 text-white px-4 py-1.5 rounded-lg hover:bg-rose-700">Retry</button>
+              </div>
+            )}
+            {!plansLoading && !plansError && plans.length === 0 && (
+              <div className="bg-white border border-dashed border-gray-300 rounded-2xl text-center py-12">
+                <Settings2 size={32} className="text-gray-200 mx-auto mb-3" />
+                <p className="text-gray-400 text-sm font-medium">No boost plans found</p>
+                <button onClick={loadPlans} className="mt-3 text-xs font-semibold text-rose-600 hover:underline">Retry</button>
+              </div>
+            )}
           <div className="grid sm:grid-cols-2 gap-4">
             {plans.map(plan => (
               <div key={plan.id} className="bg-white border border-gray-200 rounded-2xl p-5">
@@ -427,6 +453,7 @@ export default function AdminBoostsPage() {
               </div>
             ))}
           </div>
+          </>
         )}
 
         {/* Edit Plan Modal */}
