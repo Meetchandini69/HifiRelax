@@ -1,0 +1,130 @@
+{
+  "colorScheme": "dark",
+  "fonts": [
+    {
+      "family": "Inter",
+      "role": "body"
+    },
+    {
+      "family": "Playfair Display",
+      "role": "heading"
+    }
+  ],
+  "colors": {
+    "primary": "#180522",
+    "secondary": "#FF2E88",
+    "accent": "#22C55E",
+    "background": "#0B0B0B",
+    "textPrimary": "#0B0B0B",
+    "link": "#22C55E"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Inter",
+      "heading": "Playfair Display"
+    },
+    "fontStacks": {
+      "heading": [
+        "Playfair Display",
+        "serif"
+      ],
+      "body": [
+        "Inter",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Inter",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "72px",
+      "h2": "36px",
+      "body": "14px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "6px"
+  },
+  "components": {
+    "buttonPrimary": {
+      "background": "#22C55E",
+      "textColor": "#FFFFFF",
+      "borderRadius": "6px",
+      "borderRadiusCorners": {
+        "topLeft": "6px",
+        "topRight": "6px",
+        "bottomRight": "6px",
+        "bottomLeft": "6px"
+      },
+      "shadow": "none"
+    },
+    "buttonSecondary": {
+      "background": "#000000",
+      "textColor": "#FFFFFF",
+      "borderRadius": "6px",
+      "borderRadiusCorners": {
+        "topLeft": "6px",
+        "topRight": "6px",
+        "bottomRight": "6px",
+        "bottomLeft": "6px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "favicon": null,
+    "ogImage": null
+  },
+  "__llm_logo_reasoning": {
+    "selectedIndex": -1,
+    "reasoning": "No valid brand logo - only tiny/invisible/UI icons were detected, which do not represent the brand effectively.",
+    "confidence": 0.2,
+    "rejected": true,
+    "source": "llm"
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": 11,
+      "text": "WhatsApp Now",
+      "reasoning": "Button #11 ('WhatsApp Now') has a vibrant green background (#22C55E), which is a strong indicator of a primary CTA due to its bright and attention-grabbing color."
+    },
+    "secondary": {
+      "index": 15,
+      "text": "View Profiles",
+      "reasoning": "Button #0 ('View Profiles') has a dark background (#000000) with a gradient, making it distinct from the primary button's vibrant green color."
+    },
+    "confidence": 0.95
+  },
+  "personality": {
+    "tone": "bold",
+    "energy": "high",
+    "targetAudience": "Adults seeking escort services in Gurgaon"
+  },
+  "designSystem": {
+    "framework": "tailwind",
+    "componentLibrary": ""
+  },
+  "confidence": {
+    "buttons": 0.95,
+    "colors": 0.9,
+    "overall": 0.925
+  },
+  "__llm_metadata": {
+    "logoSelection": {
+      "llmCalled": true,
+      "llmSucceeded": true,
+      "finalSource": "llm",
+      "rawLogoSelection": {
+        "selectedLogoIndex": -1,
+        "selectedLogoReasoning": "No valid brand logo - only tiny/invisible/UI icons were detected, which do not represent the brand effectively.",
+        "confidence": 0.2
+      }
+    },
+    "buttonClassification": {
+      "llmCalled": true,
+      "llmSucceeded": true
+    }
+  }
+}

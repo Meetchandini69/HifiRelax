@@ -1,0 +1,44 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --font-sans: var(--app-font-sans);
+}
+
+:root {
+  --app-font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: var(--app-font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #fff;
+    color: #111827;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  .gradient-hero {
+    background: linear-gradient(135deg, #1a0a12 0%, #3d1027 40%, #6b1a3a 70%, #a01d50 100%);
+  }
+  .gradient-pink {
+    background: linear-gradient(135deg, #c92060 0%, #e91e8c 100%);
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, #c92060, #e91e8c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gold-gradient {
+    background: linear-gradient(135deg, #c9a227 0%, #f0c040 50%, #c9a227 100%);
+  }
+}

@@ -1,0 +1,44 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "-28APZcxeHEz44V56kGtf"
+uri = "file://artifacts/chennai-agency/chennai-agency-website.tar.gz"
+type = "unspecified"
+title = "Chennai Agency Website — Source Code (.tar.gz)"
+
+[[outputs]]
+id = "C0XRHjTmm66o5sd4W_N3M"
+uri = "file://artifacts/chennai-agency/LOCAL_SETUP.md"
+type = "text"
+title = "Setup & Customization Guide (LOCAL_SETUP.md)"
+
+[[outputs]]
+id = "QChPKtp4HvwAyhyT2uk1C"
+uri = "file://artifacts/chennai-agency/standalone/chennai-agency-standalone.tar.gz"
+type = "unspecified"
+title = "Chennai Agency — Standalone Website (Clean, works locally)"
+
+[[outputs]]
+id = "xfBxOEsnWlSRzPaup8o_M"
+uri = "file://artifacts/chennai-agency/standalone/LOCAL_SETUP.md"
+type = "text"
+title = "Local Setup & Customization Guide"
+
+[[outputs]]
+id = "j4PEPSPQUYdYteSFoNNRH"
+uri = "file://coimbatore-escort-agency.tar.gz"
+type = "unspecified"
+title = "Coimbatore Escort Agency — Standalone Site"
+
+[[outputs]]
+id = "nXhxDDR1uzZYgOaYCJhOc"
+uri = "file://eliteescorts-platform.tar.gz"
+type = "unspecified"
+title = "EliteEscorts Platform — Complete Source Code"
+
+[[outputs]]
+id = "L76U-2cQDNOjvxMBtLQ9o"
+uri = "file://eliteescorts-platform.zip"
+type = "unspecified"
+title = "EliteEscorts Platform — Windows Compatible (.zip)"
