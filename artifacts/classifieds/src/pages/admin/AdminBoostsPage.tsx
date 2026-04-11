@@ -5,19 +5,7 @@ import Navbar from "@/components/Navbar";
 import AdminNav from "@/components/AdminNav";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, Clock, Crown, Gem, Zap, Settings2, Plus, Trash2, RefreshCw } from "lucide-react";
-
-const BADGE_STYLES: Record<string, string> = {
-  vip:      "bg-purple-100 text-purple-700 border-purple-200",
-  premium:  "bg-amber-100 text-amber-700 border-amber-200",
-  featured: "bg-blue-100 text-blue-700 border-blue-200",
-};
-
-const BADGE_ICONS: Record<string, React.ReactNode> = {
-  vip:      <Gem  size={11} className="inline mr-0.5" />,
-  premium:  <Crown size={11} className="inline mr-0.5" />,
-  featured: <Zap  size={11} className="inline mr-0.5" />,
-};
+import { CheckCircle, XCircle, Clock, TrendingUp, Images, Settings2, Trash2, RefreshCw, Plus } from "lucide-react";
 
 const STATUS_STYLES: Record<string, string> = {
   pending:  "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -35,7 +23,7 @@ export default function AdminBoostsPage() {
   const [approvedProfiles, setApprovedProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editPlan, setEditPlan] = useState<any>(null);
-  const [applyForm, setApplyForm] = useState({ profile_id: "", plan_slug: "", duration_days: "" });
+  const [applyForm, setApplyForm] = useState({ profile_id: "", plan_slug: "", tier_slug: "", addon_gallery: false });
   const [applyLoading, setApplyLoading] = useState(false);
 
   useEffect(() => {
@@ -91,19 +79,25 @@ export default function AdminBoostsPage() {
     }
     setApplyLoading(true);
     try {
-      const days = applyForm.duration_days ? parseInt(applyForm.duration_days) : undefined;
-      await api.adminApplyBoost(parseInt(applyForm.profile_id), applyForm.plan_slug, days);
+      await api.adminApplyBoost(
+        parseInt(applyForm.profile_id),
+        applyForm.plan_slug,
+        applyForm.tier_slug || undefined,
+        undefined,
+        applyForm.addon_gallery
+      );
       toast.success("Boost applied successfully!");
-      setApplyForm({ profile_id: "", plan_slug: "", duration_days: "" });
+      setApplyForm({ profile_id: "", plan_slug: "", tier_slug: "", addon_gallery: false });
       loadApprovedProfiles();
     } catch (err: any) { toast.error(err.message); }
     finally { setApplyLoading(false); }
   };
 
-  const handleRemoveBoost = async (profileId: number, title: string) => {
-    if (!confirm(`Remove boost from "${title}"?`)) return;
+  const handleRemoveBoost = async (profileId: number, title: string, type?: "gallery" | "all") => {
+    const label = type === "gallery" ? "gallery boost" : type === "all" ? "ALL boosts" : "Top Ad boost";
+    if (!confirm(`Remove ${label} from "${title}"?`)) return;
     try {
-      await api.adminRemoveBoost(profileId);
+      await api.adminRemoveBoost(profileId, type);
       toast.success("Boost removed");
       loadApprovedProfiles();
     } catch (err: any) { toast.error(err.message); }
@@ -112,12 +106,17 @@ export default function AdminBoostsPage() {
   const handleSavePlan = async () => {
     if (!editPlan) return;
     try {
+      // Update plan base
       await api.adminUpdateBoostPlan(editPlan.id, {
         price: editPlan.price,
         duration_days: editPlan.duration_days,
         is_active: editPlan.is_active,
         description: editPlan.description,
       });
+      // Update tiers if any
+      for (const tier of (editPlan.tiers ?? [])) {
+        await api.adminUpdateBoostTier(tier.id, Number(tier.price));
+      }
       toast.success("Plan updated");
       setEditPlan(null);
       loadPlans();
@@ -125,6 +124,10 @@ export default function AdminBoostsPage() {
   };
 
   const pending = requests.filter(r => r.status === "pending").length;
+
+  // Get tiers for selected plan in apply form
+  const selectedPlanObj = plans.find((p: any) => p.slug === applyForm.plan_slug);
+  const tiersForApply: any[] = selectedPlanObj?.tiers ?? [];
 
   if (authLoading || !user) return null;
 
@@ -183,49 +186,72 @@ export default function AdminBoostsPage() {
             </div>
 
             {loading ? (
-              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-white rounded-xl animate-pulse border border-gray-200" />)}</div>
+              <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-24 bg-white rounded-xl animate-pulse border border-gray-200" />)}</div>
             ) : requests.length === 0 ? (
-              <div className="bg-white border border-dashed border-gray-300 rounded-2xl text-center py-12 text-gray-400 text-sm">
-                No {filter || ""} boost requests found
+              <div className="bg-white border border-dashed border-gray-300 rounded-2xl text-center py-12">
+                <TrendingUp size={32} className="text-gray-200 mx-auto mb-3" />
+                <p className="text-gray-400 text-sm font-medium">No {filter || ""} boost requests</p>
+                <p className="text-gray-300 text-xs mt-1">When users request boosts, they'll appear here</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {requests.map(r => (
-                  <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-semibold text-sm text-gray-900 truncate">{r.profile_title}</span>
-                        <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${BADGE_STYLES[r.plan_slug] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                          {BADGE_ICONS[r.plan_slug]}{r.badge_label ?? r.plan_slug}
-                        </span>
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_STYLES[r.status]}`}>
-                          {r.status === "pending" ? <Clock size={10} /> : r.status === "approved" ? <CheckCircle size={10} /> : <XCircle size={10} />}
-                          {r.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <span>{r.user_email}</span>
-                        <span>·</span>
-                        <span>₹{r.price} / {r.duration_days} days</span>
-                        <span>·</span>
-                        <span>{new Date(r.created_at).toLocaleDateString("en-IN")}</span>
-                        {r.admin_note && <span className="text-rose-500">Note: {r.admin_note}</span>}
+                {requests.map(r => {
+                  const isTopAd = r.plan_slug === "top_ad";
+                  const price = r.tier_price ?? r.price ?? 0;
+                  const duration = r.tier_duration_days ?? r.duration_days ?? 0;
+                  const tierLabel = r.tier_label ?? null;
+                  return (
+                    <div key={r.id} className="bg-white border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className="font-semibold text-sm text-gray-900 truncate">{r.profile_title}</span>
+                            {isTopAd ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                                <TrendingUp size={9} /> Top Ad {tierLabel ? `· ${tierLabel}` : ""}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
+                                <Images size={9} /> Gallery Boost {tierLabel ? `· ${tierLabel}` : ""}
+                              </span>
+                            )}
+                            {r.addon_gallery && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
+                                <Images size={9} /> + Gallery Boost
+                              </span>
+                            )}
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${STATUS_STYLES[r.status]}`}>
+                              {r.status === "pending" ? <Clock size={10} /> : r.status === "approved" ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                              {r.status}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                            <span>{r.user_email}</span>
+                            <span>·</span>
+                            <span>₹{price} / {duration} days</span>
+                            <span>·</span>
+                            <span>{r.area}, {r.city}</span>
+                            <span>·</span>
+                            <span>{new Date(r.created_at).toLocaleDateString("en-IN")}</span>
+                            {r.admin_note && <span className="text-rose-500">Note: {r.admin_note}</span>}
+                          </div>
+                        </div>
+                        {r.status === "pending" && (
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button onClick={() => handleApprove(r.id)}
+                              className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                              <CheckCircle size={12} /> Approve
+                            </button>
+                            <button onClick={() => handleReject(r.id)}
+                              className="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+                              <XCircle size={12} /> Reject
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    {r.status === "pending" && (
-                      <div className="flex gap-2 flex-shrink-0">
-                        <button onClick={() => handleApprove(r.id)}
-                          className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                          <CheckCircle size={12} /> Approve
-                        </button>
-                        <button onClick={() => handleReject(r.id)}
-                          className="flex items-center gap-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                          <XCircle size={12} /> Reject
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
@@ -239,7 +265,7 @@ export default function AdminBoostsPage() {
               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Plus size={16} className="text-rose-600" /> Apply Boost to Profile
               </h3>
-              <div className="grid sm:grid-cols-3 gap-3 mb-4">
+              <div className="grid sm:grid-cols-2 gap-3 mb-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Profile</label>
                   <select value={applyForm.profile_id}
@@ -257,19 +283,31 @@ export default function AdminBoostsPage() {
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Plan</label>
                   <select value={applyForm.plan_slug}
-                    onChange={e => setApplyForm(f => ({ ...f, plan_slug: e.target.value }))}
+                    onChange={e => setApplyForm(f => ({ ...f, plan_slug: e.target.value, tier_slug: "" }))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                     <option value="">Select plan…</option>
-                    {plans.map(p => <option key={p.slug} value={p.slug}>{p.name} — ₹{p.price} / {p.duration_days}d</option>)}
+                    {plans.map(p => <option key={p.slug} value={p.slug}>{p.name}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Custom Duration (days, optional)</label>
-                  <input type="number" placeholder="Use plan default"
-                    value={applyForm.duration_days}
-                    onChange={e => setApplyForm(f => ({ ...f, duration_days: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                </div>
+                {tiersForApply.length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Validity / Tier</label>
+                    <select value={applyForm.tier_slug}
+                      onChange={e => setApplyForm(f => ({ ...f, tier_slug: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                      <option value="">Use plan default</option>
+                      {tiersForApply.map(t => <option key={t.tier_slug} value={t.tier_slug}>{t.label} — ₹{t.price}</option>)}
+                    </select>
+                  </div>
+                )}
+                {applyForm.plan_slug === "top_ad" && (
+                  <div className="flex items-center gap-2 sm:col-span-2">
+                    <input type="checkbox" id="addon_gallery" checked={applyForm.addon_gallery}
+                      onChange={e => setApplyForm(f => ({ ...f, addon_gallery: e.target.checked }))}
+                      className="w-4 h-4 rounded border-gray-300 text-violet-600" />
+                    <label htmlFor="addon_gallery" className="text-sm text-gray-700">Also apply Gallery Boost (same duration)</label>
+                  </div>
+                )}
               </div>
               <button onClick={handleDirectApply} disabled={applyLoading}
                 className="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors disabled:opacity-50">
@@ -280,7 +318,7 @@ export default function AdminBoostsPage() {
             {/* Active boosts table */}
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-                <h3 className="font-semibold text-gray-900 text-sm">Active & Inactive Boosts on Profiles</h3>
+                <h3 className="font-semibold text-gray-900 text-sm">Profile Boost Status</h3>
                 <button onClick={loadApprovedProfiles} className="text-gray-400 hover:text-rose-600 transition-colors" title="Refresh">
                   <RefreshCw size={14} />
                 </button>
@@ -290,38 +328,57 @@ export default function AdminBoostsPage() {
                   <p className="text-center text-gray-400 text-sm py-8">No approved profiles</p>
                 ) : (
                   approvedProfiles.map(p => {
-                    const isActive = p.boost_expires_at && new Date(p.boost_expires_at) > new Date();
+                    const isTopAdActive = p.boost_plan_slug === "top_ad" && p.boost_expires_at && new Date(p.boost_expires_at) > new Date();
+                    const isGalleryActive = p.gallery_boost_expires_at && new Date(p.gallery_boost_expires_at) > new Date();
                     return (
                       <div key={p.id} className="flex items-center gap-3 px-5 py-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium text-gray-900 truncate">{p.title}</span>
-                            {isActive && p.badge_label ? (
-                              <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${BADGE_STYLES[p.boost_plan_slug] ?? ""}`}>
-                                {BADGE_ICONS[p.boost_plan_slug]}{p.badge_label}
+                            {isTopAdActive ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
+                                <TrendingUp size={9} /> ⭐ Trending
                               </span>
                             ) : (
-                              <span className="text-[10px] text-gray-400 border border-gray-200 rounded-full px-2 py-0.5">No boost</span>
+                              <span className="text-[10px] text-gray-400 border border-gray-200 rounded-full px-2 py-0.5">No Top Ad</span>
+                            )}
+                            {isGalleryActive && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
+                                <Images size={9} /> Gallery
+                              </span>
                             )}
                           </div>
                           <div className="text-xs text-gray-500 mt-0.5">
                             {p.area}, {p.city} · {p.user_email}
-                            {isActive && p.boost_expires_at && (
+                            {isTopAdActive && p.boost_expires_at && (
                               <span className="ml-2 text-green-600 font-medium">
-                                expires {new Date(p.boost_expires_at).toLocaleDateString("en-IN")}
+                                Top Ad expires {new Date(p.boost_expires_at).toLocaleDateString("en-IN")}
                               </span>
                             )}
-                            {p.boost_expires_at && !isActive && (
-                              <span className="ml-2 text-red-400">expired</span>
+                            {!isTopAdActive && p.boost_expires_at && (
+                              <span className="ml-2 text-red-400">Top Ad expired</span>
+                            )}
+                            {isGalleryActive && p.gallery_boost_expires_at && (
+                              <span className="ml-2 text-violet-600 font-medium">
+                                · Gallery expires {new Date(p.gallery_boost_expires_at).toLocaleDateString("en-IN")}
+                              </span>
                             )}
                           </div>
                         </div>
-                        {isActive && (
-                          <button onClick={() => handleRemoveBoost(p.id, p.title)}
-                            className="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg border border-red-200 transition-colors">
-                            <Trash2 size={12} /> Remove
-                          </button>
-                        )}
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {isTopAdActive && (
+                            <button onClick={() => handleRemoveBoost(p.id, p.title)}
+                              className="flex items-center gap-1 text-xs font-medium text-red-600 hover:bg-red-50 px-2 py-1.5 rounded-lg border border-red-200 transition-colors">
+                              <Trash2 size={11} /> Top Ad
+                            </button>
+                          )}
+                          {isGalleryActive && (
+                            <button onClick={() => handleRemoveBoost(p.id, p.title, "gallery")}
+                              className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:bg-violet-50 px-2 py-1.5 rounded-lg border border-violet-200 transition-colors">
+                              <Images size={11} /> Gallery
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })
@@ -333,24 +390,37 @@ export default function AdminBoostsPage() {
 
         {/* ── PLANS TAB ── */}
         {tab === "plans" && (
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 gap-4">
             {plans.map(plan => (
               <div key={plan.id} className="bg-white border border-gray-200 rounded-2xl p-5">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border ${BADGE_STYLES[plan.slug] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                      {BADGE_ICONS[plan.slug]}{plan.badge_label}
-                    </span>
-                    <h3 className="font-bold text-gray-900 mt-1">{plan.name}</h3>
+                  <div className="flex items-center gap-2">
+                    {plan.slug === "top_ad" ? (
+                      <TrendingUp size={18} className="text-rose-500" />
+                    ) : (
+                      <Images size={18} className="text-violet-500" />
+                    )}
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-sm">{plan.name}</h3>
+                      <p className="text-xs text-gray-400 mt-0.5">{plan.description}</p>
+                    </div>
                   </div>
-                  <button onClick={() => setEditPlan({ ...plan })}
-                    className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                  <button onClick={() => setEditPlan({ ...plan, tiers: plan.tiers?.map((t: any) => ({ ...t })) ?? [] })}
+                    className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0">
                     <Settings2 size={15} />
                   </button>
                 </div>
-                <div className="text-2xl font-extrabold text-gray-900">₹{plan.price}</div>
-                <div className="text-xs text-gray-500 mb-3">{plan.duration_days} days</div>
-                <p className="text-xs text-gray-500">{plan.description}</p>
+                {/* Tiers */}
+                {plan.tiers && plan.tiers.length > 0 && (
+                  <div className="space-y-1">
+                    {plan.tiers.map((t: any) => (
+                      <div key={t.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-1.5 text-xs">
+                        <span className="text-gray-600">{t.label} ({t.duration_days}d)</span>
+                        <span className="font-bold text-gray-900">₹{t.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className={`mt-3 text-xs font-medium ${plan.is_active ? "text-green-600" : "text-red-500"}`}>
                   {plan.is_active ? "● Active" : "● Inactive"}
                 </div>
@@ -362,21 +432,9 @@ export default function AdminBoostsPage() {
         {/* Edit Plan Modal */}
         {editPlan && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Edit {editPlan.name} Plan</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Price (₹)</label>
-                  <input type="number" value={editPlan.price}
-                    onChange={e => setEditPlan({ ...editPlan, price: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Duration (days)</label>
-                  <input type="number" value={editPlan.duration_days}
-                    onChange={e => setEditPlan({ ...editPlan, duration_days: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                </div>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
+              <h3 className="font-bold text-gray-900 mb-4">Edit: {editPlan.name}</h3>
+              <div className="space-y-3 mb-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
                   <textarea value={editPlan.description}
@@ -390,7 +448,33 @@ export default function AdminBoostsPage() {
                   Active (visible to users)
                 </label>
               </div>
-              <div className="flex gap-2 mt-5">
+
+              {/* Tier pricing */}
+              {editPlan.tiers && editPlan.tiers.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Tier Pricing</p>
+                  <div className="space-y-2">
+                    {editPlan.tiers.map((tier: any, i: number) => (
+                      <div key={tier.id} className="flex items-center gap-3">
+                        <span className="text-sm text-gray-600 w-20 flex-shrink-0">{tier.label}</span>
+                        <div className="flex items-center gap-1 flex-1">
+                          <span className="text-gray-400 text-sm">₹</span>
+                          <input type="number"
+                            value={tier.price}
+                            onChange={e => {
+                              const newTiers = [...editPlan.tiers];
+                              newTiers[i] = { ...tier, price: e.target.value };
+                              setEditPlan({ ...editPlan, tiers: newTiers });
+                            }}
+                            className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
                 <button onClick={handleSavePlan}
                   className="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
                   Save Changes

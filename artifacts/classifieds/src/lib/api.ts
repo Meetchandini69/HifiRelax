@@ -95,8 +95,8 @@ export const api = {
   getBoostPlans: () => request(`${API}/classifieds/boosts/plans`),
 
   // Boosts (user)
-  requestBoost: (profile_id: number, plan_slug: string) =>
-    request(`${API}/classifieds/boosts/request`, { method: "POST", body: JSON.stringify({ profile_id, plan_slug }) }),
+  requestBoost: (profile_id: number, plan_slug: string, tier_slug?: string, addon_gallery?: boolean) =>
+    request(`${API}/classifieds/boosts/request`, { method: "POST", body: JSON.stringify({ profile_id, plan_slug, tier_slug, addon_gallery }) }),
   getMyBoostRequests: () => request(`${API}/classifieds/boosts/my-requests`),
 
   // Boosts (admin)
@@ -108,13 +108,17 @@ export const api = {
     request(`${API}/classifieds/boosts/admin/requests/${id}/approve`, { method: "PUT", body: JSON.stringify({ note }) }),
   adminRejectBoost: (id: number, note?: string) =>
     request(`${API}/classifieds/boosts/admin/requests/${id}/reject`, { method: "PUT", body: JSON.stringify({ note }) }),
-  adminApplyBoost: (profile_id: number, plan_slug: string, duration_days?: number) =>
-    request(`${API}/classifieds/boosts/admin/apply`, { method: "POST", body: JSON.stringify({ profile_id, plan_slug, duration_days }) }),
-  adminRemoveBoost: (profileId: number) =>
-    request(`${API}/classifieds/boosts/admin/apply/${profileId}`, { method: "DELETE" }),
+  adminApplyBoost: (profile_id: number, plan_slug: string, tier_slug?: string, duration_days?: number, addon_gallery?: boolean) =>
+    request(`${API}/classifieds/boosts/admin/apply`, { method: "POST", body: JSON.stringify({ profile_id, plan_slug, tier_slug, duration_days, addon_gallery }) }),
+  adminRemoveBoost: (profileId: number, type?: "gallery" | "all") => {
+    const qs = type ? `?type=${type}` : "";
+    return request(`${API}/classifieds/boosts/admin/apply/${profileId}${qs}`, { method: "DELETE" });
+  },
   adminGetBoostPlans: () => request(`${API}/classifieds/boosts/admin/plans`),
   adminUpdateBoostPlan: (id: number, body: object) =>
     request(`${API}/classifieds/boosts/admin/plans/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  adminUpdateBoostTier: (id: number, price: number) =>
+    request(`${API}/classifieds/boosts/admin/tiers/${id}`, { method: "PUT", body: JSON.stringify({ price }) }),
   adminGetApprovedProfiles: () => request(`${API}/classifieds/boosts/admin/approved-profiles`),
 
   // Page Content (public)

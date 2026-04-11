@@ -20,7 +20,8 @@ router.get("/", async (req, res) => {
              CASE WHEN p.boost_expires_at > NOW() THEN p.boost_plan_slug ELSE NULL END as active_boost_slug,
              CASE WHEN p.boost_expires_at > NOW() THEN bp.badge_label ELSE NULL END as active_badge_label,
              CASE WHEN p.boost_expires_at > NOW() THEN bp.badge_color ELSE NULL END as active_badge_color,
-             CASE WHEN p.boost_expires_at > NOW() THEN p.boost_sort_priority ELSE 0 END as effective_priority
+             CASE WHEN p.boost_expires_at > NOW() THEN p.boost_sort_priority ELSE 0 END as effective_priority,
+             CASE WHEN p.gallery_boost_expires_at > NOW() THEN true ELSE false END as gallery_boost_active
       FROM ec_profiles p
       LEFT JOIN ec_locations l ON p.location_id = l.id
       LEFT JOIN ec_users u ON p.user_id = u.id
@@ -31,7 +32,8 @@ router.get("/", async (req, res) => {
     if (area_slug) { params.push(area_slug); query += ` AND l.area_slug=$${params.length}`; }
     if (city) { params.push(city); query += ` AND l.city=$${params.length}`; }
     if (state) { params.push(state); query += ` AND l.state=$${params.length}`; }
-    query += " ORDER BY effective_priority DESC, p.updated_at DESC";
+    // Boosted profiles (top_ad) sorted by approval time ASC (first purchased = top position), then non-boosted by date
+    query += " ORDER BY effective_priority DESC, p.boost_approved_at ASC NULLS LAST, p.updated_at DESC";
     params.push(parseInt(limit)); query += ` LIMIT $${params.length}`;
     params.push(offset); query += ` OFFSET $${params.length}`;
     const result = await pool.query(query, params);
@@ -125,7 +127,8 @@ router.get("/mine", requireAuth as any, async (req: AuthRequest, res) => {
               CASE WHEN p.boost_expires_at > NOW() THEN p.boost_plan_slug ELSE NULL END as active_boost_slug,
               CASE WHEN p.boost_expires_at > NOW() THEN bp.badge_label ELSE NULL END as active_badge_label,
               CASE WHEN p.boost_expires_at > NOW() THEN bp.badge_color ELSE NULL END as active_badge_color,
-              p.boost_expires_at
+              p.boost_expires_at,
+              CASE WHEN p.gallery_boost_expires_at > NOW() THEN true ELSE false END as gallery_boost_active
        FROM ec_profiles p
        LEFT JOIN ec_locations l ON p.location_id=l.id
        LEFT JOIN ec_boost_plans bp ON p.boost_plan_slug=bp.slug

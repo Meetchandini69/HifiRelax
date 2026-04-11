@@ -63,10 +63,13 @@ export default function PostProfilePage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [galleryBoostActive, setGalleryBoostActive] = useState(false);
   const [form, setForm] = useState({
     title: "", name: "", description: "", age: "",
     phone: "", whatsapp: "", telegram: "", location_id: "",
   });
+
+  const maxPhotos = galleryBoostActive ? 20 : 6;
 
   useEffect(() => {
     if (!authLoading && !user) nav("/login");
@@ -81,6 +84,7 @@ export default function PostProfilePage() {
           setForm({ title: p.title, name: p.name, description: p.description || "", age: p.age?.toString() || "", phone: p.phone || "", whatsapp: p.whatsapp || "", telegram: p.telegram || "", location_id: p.location_id?.toString() || "" });
           setPhotos(p.photos || []);
           setSelectedServices(p.services || []);
+          setGalleryBoostActive(p.gallery_boost_active || false);
         }
       });
     }
@@ -90,7 +94,7 @@ export default function PostProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) { toast.error("Image must be under 10MB"); e.target.value = ""; return; }
-    if (photos.length >= 6) { toast.error("Maximum 6 photos allowed"); e.target.value = ""; return; }
+    if (photos.length >= maxPhotos) { toast.error(`Maximum ${maxPhotos} photos allowed`); e.target.value = ""; return; }
     const reader = new FileReader();
     reader.onload = () => setCropSrc(reader.result as string);
     reader.readAsDataURL(file);
@@ -148,7 +152,17 @@ export default function PostProfilePage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Photos */}
           <div className="bg-white border border-gray-200 rounded-2xl p-5">
-            <h2 className="font-semibold text-gray-900 text-sm mb-3">Photos <span className="text-rose-600">*</span> <span className="text-gray-400 font-normal">(max 6, 3MB each)</span></h2>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="font-semibold text-gray-900 text-sm">Photos <span className="text-rose-600">*</span></h2>
+              {galleryBoostActive ? (
+                <span className="text-xs bg-violet-100 text-violet-700 border border-violet-200 px-2 py-0.5 rounded-full font-medium">
+                  🖼 Gallery Boost — up to {maxPhotos} photos
+                </span>
+              ) : (
+                <span className="text-gray-400 font-normal text-xs">(max {maxPhotos}, 10MB each)</span>
+              )}
+              <span className="ml-auto text-xs text-gray-400">{photos.length}/{maxPhotos}</span>
+            </div>
             <div className="flex flex-wrap gap-2 mb-3">
               {photos.map((src, i) => (
                 <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
@@ -159,7 +173,7 @@ export default function PostProfilePage() {
                   </button>
                 </div>
               ))}
-              {photos.length < 6 && (
+              {photos.length < maxPhotos && (
                 <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-rose-400 flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:text-rose-500 transition-colors">
                   <Upload size={18} />
                   <span className="text-[10px] mt-0.5">Add</span>

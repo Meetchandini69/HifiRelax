@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { MapPin, Phone, MessageCircle, Star, Crown, Gem, Zap } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Images } from "lucide-react";
 
 interface Profile {
   id: number; title: string; name: string; description: string; age: number;
@@ -7,51 +8,91 @@ interface Profile {
   area: string; city: string; state: string; area_slug: string; full_url: string; slug: string;
   status: string; created_at: string;
   active_boost_slug?: string; active_badge_label?: string; active_badge_color?: string;
+  gallery_boost_active?: boolean;
 }
-
-const BOOST_STYLES: Record<string, { bg: string; text: string; border: string; icon: React.ReactNode }> = {
-  vip:      { bg: "bg-purple-600",  text: "text-white", border: "border-purple-400", icon: <Gem  size={10} className="inline mr-0.5" /> },
-  premium:  { bg: "bg-amber-500",   text: "text-white", border: "border-amber-300",  icon: <Crown size={10} className="inline mr-0.5" /> },
-  featured: { bg: "bg-blue-500",    text: "text-white", border: "border-blue-300",   icon: <Zap  size={10} className="inline mr-0.5" /> },
-};
-
-const CARD_BOOST_RING: Record<string, string> = {
-  vip:      "ring-2 ring-purple-400 ring-offset-1",
-  premium:  "ring-2 ring-amber-400 ring-offset-1",
-  featured: "ring-2 ring-blue-400 ring-offset-1",
-};
 
 export default function ProfileCard({ p }: { p: Profile }) {
   const href = `/escorts/${p.area_slug}/${p.slug}`;
-  const photo = p.photos?.[0];
-  const boost = p.active_boost_slug ? BOOST_STYLES[p.active_boost_slug] : null;
-  const ring = p.active_boost_slug ? CARD_BOOST_RING[p.active_boost_slug] ?? "" : "";
+  const photos = p.photos ?? [];
+  const hasGallery = p.gallery_boost_active && photos.length > 1;
+  const [slideIdx, setSlideIdx] = useState(0);
+
+  const isTrending = p.active_boost_slug === "top_ad";
+
+  const currentPhoto = hasGallery ? photos[slideIdx] : photos[0];
 
   return (
-    <article className={`bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all duration-200 group ${ring}`}>
+    <article className={`bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all duration-200 group ${
+      isTrending ? "ring-2 ring-rose-400 ring-offset-1" : ""
+    }`}>
       <Link href={href}>
         <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-          {photo ? (
-            <img src={photo} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400" />
+          {currentPhoto ? (
+            <img
+              src={currentPhoto}
+              alt={p.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-50 to-pink-100">
               <span className="text-4xl font-bold text-rose-200">{p.name?.[0]}</span>
             </div>
           )}
+
           {/* Boost badge */}
-          {boost && p.active_badge_label ? (
-            <div className={`absolute top-2 right-2 ${boost.bg} ${boost.text} text-[10px] font-bold px-2 py-0.5 rounded-full shadow`}>
-              {boost.icon}{p.active_badge_label}
+          {isTrending ? (
+            <div className="absolute top-2 right-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow flex items-center gap-0.5">
+              ⭐ Trending
             </div>
           ) : (
             <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
-              <Star size={10} className="inline fill-yellow-400 text-yellow-400 mr-0.5" />
               New
             </div>
           )}
+
+          {/* Age badge */}
           {p.age && (
             <div className="absolute top-2 left-2 bg-rose-600 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
               {p.age} yrs
+            </div>
+          )}
+
+          {/* Gallery slideshow controls */}
+          {hasGallery && photos.length > 1 && (
+            <>
+              {/* Prev / Next buttons */}
+              <button
+                onClick={e => { e.preventDefault(); e.stopPropagation(); setSlideIdx(i => (i - 1 + photos.length) % photos.length); }}
+                className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs transition-colors z-10"
+                aria-label="Previous photo"
+              >
+                ‹
+              </button>
+              <button
+                onClick={e => { e.preventDefault(); e.stopPropagation(); setSlideIdx(i => (i + 1) % photos.length); }}
+                className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs transition-colors z-10"
+                aria-label="Next photo"
+              >
+                ›
+              </button>
+              {/* Dot indicators */}
+              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1">
+                {photos.slice(0, 8).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); setSlideIdx(i); }}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i === slideIdx ? "bg-white" : "bg-white/50"}`}
+                  />
+                ))}
+                {photos.length > 8 && <span className="text-white/70 text-[9px]">+{photos.length - 8}</span>}
+              </div>
+            </>
+          )}
+
+          {/* Gallery badge */}
+          {hasGallery && (
+            <div className="absolute bottom-6 left-2 bg-violet-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
+              <Images size={9} /> {photos.length} photos
             </div>
           )}
         </div>
