@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
@@ -16,9 +18,30 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
+async function runSchemaMigration() {
+  // Resolve schema.sql — works whether cwd is project root or artifacts/api-server
+  const candidates = [
+    join(process.cwd(), "schema/schema.sql"),           // cwd = project root
+    join(process.cwd(), "../../schema/schema.sql"),     // cwd = artifacts/api-server
+  ];
+  let sql: string | null = null;
+  for (const p of candidates) {
+    try { sql = readFileSync(p, "utf-8"); break; } catch { /* try next */ }
+  }
+  if (!sql) {
+    logger.warn("Schema file not found — skipping migration");
+    return;
+  }
+  try {
+    await pool.query(sql);
+    logger.info("Schema migration applied");
+  } catch (err) {
+    logger.warn({ err }, "Schema migration error");
+  }
+}
+
 async function seedBoostPlans() {
   try {
-    // Insert top_ad plan if it doesn't exist
     await pool.query(`
       INSERT INTO ec_boost_plans (name, slug, badge_label, badge_color, sort_priority, description, price, duration_days, is_active)
       VALUES
@@ -31,7 +54,6 @@ async function seedBoostPlans() {
       ON CONFLICT (slug) DO NOTHING
     `);
 
-    // Insert tiers only if none exist for these plans
     const existing = await pool.query(
       `SELECT COUNT(*) FROM ec_boost_plan_tiers WHERE plan_slug IN ('top_ad','gallery_boost')`
     );
@@ -49,7 +71,7 @@ async function seedBoostPlans() {
     }
     logger.info("Boost plans seeded (or already exist)");
   } catch (err) {
-    logger.warn({ err }, "Boost plan seed skipped (table may not exist yet)");
+    logger.warn({ err }, "Boost plan seed skipped");
   }
 }
 
@@ -59,5 +81,6 @@ app.listen(port, async (err) => {
     process.exit(1);
   }
   logger.info({ port }, "Server listening");
+  await runSchemaMigration();
   await seedBoostPlans();
 });
