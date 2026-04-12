@@ -77,7 +77,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-6">
+          <p className="text-center hidden text-xs text-gray-400 mt-6">
             Admin login? Use admin@eliteescorts.in / Admin@1234
           </p>
         </div>
