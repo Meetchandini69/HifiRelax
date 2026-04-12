@@ -18,26 +18,33 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-async function runSchemaMigration() {
-  // Resolve schema.sql — works whether cwd is project root or artifacts/api-server
+async function runSqlFile(filename: string, label: string) {
   const candidates = [
-    join(process.cwd(), "schema/schema.sql"),           // cwd = project root
-    join(process.cwd(), "../../schema/schema.sql"),     // cwd = artifacts/api-server
+    join(process.cwd(), `schema/${filename}`),
+    join(process.cwd(), `../../schema/${filename}`),
   ];
   let sql: string | null = null;
   for (const p of candidates) {
     try { sql = readFileSync(p, "utf-8"); break; } catch { /* try next */ }
   }
   if (!sql) {
-    logger.warn("Schema file not found — skipping migration");
+    logger.warn(`${label} file not found — skipping`);
     return;
   }
   try {
     await pool.query(sql);
-    logger.info("Schema migration applied");
+    logger.info(`${label} applied`);
   } catch (err) {
-    logger.warn({ err }, "Schema migration error");
+    logger.warn({ err }, `${label} error`);
   }
+}
+
+async function runSchemaMigration() {
+  await runSqlFile("schema.sql", "Schema migration");
+}
+
+async function runSeedData() {
+  await runSqlFile("seed.sql", "Seed data");
 }
 
 async function seedBoostPlans() {
@@ -82,5 +89,6 @@ app.listen(port, async (err) => {
   }
   logger.info({ port }, "Server listening");
   await runSchemaMigration();
+  await runSeedData();
   await seedBoostPlans();
 });
