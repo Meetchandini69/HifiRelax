@@ -8,15 +8,16 @@ import AdminNav from "@/components/AdminNav";
 import { toast } from "sonner";
 import {
   User, Globe, Layout, Palette, Users,
-  Save, Loader2, Trash2, PauseCircle, PlayCircle, Eye, EyeOff, ChevronDown, ChevronUp,
+  Save, Loader2, Trash2, PauseCircle, PlayCircle, Eye, EyeOff, ChevronDown, ChevronUp, FileCode,
 } from "lucide-react";
 
 const TABS = [
-  { id: "profile",  label: "My Profile",      icon: User },
-  { id: "seo",      label: "SEO / URL Master", icon: Globe },
-  { id: "layout",   label: "Header & Footer",  icon: Layout },
-  { id: "theme",    label: "Theme",            icon: Palette },
-  { id: "users",    label: "Users",            icon: Users },
+  { id: "profile",   label: "My Profile",      icon: User },
+  { id: "seo",       label: "SEO / URL Master", icon: Globe },
+  { id: "seofiles",  label: "SEO Files",        icon: FileCode },
+  { id: "layout",    label: "Header & Footer",  icon: Layout },
+  { id: "theme",     label: "Theme",            icon: Palette },
+  { id: "users",     label: "Users",            icon: Users },
 ];
 
 // ─── helper ──────────────────────────────────────────────────────────────────
@@ -109,6 +110,9 @@ export default function AdminSettingsPage() {
   // Theme tab state
   const [themeColor, setThemeColor] = useState("rose");
 
+  // SEO Files tab state
+  const [seoFiles, setSeoFiles] = useState({ sitemap_xml: "", sitemap_html: "", gsc_filename: "", gsc_content: "" });
+
   // Users tab state
   const [users, setUsers] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -141,6 +145,7 @@ export default function AdminSettingsPage() {
     setAdminEmail(user.email || "");
 
     api.getLocations().then(setLocations).catch(() => {});
+    api.adminGetSeoFiles().then((d: any) => setSeoFiles(prev => ({ ...prev, ...d }))).catch(() => {});
     loadUsers();
   }, [user]);
 
@@ -189,6 +194,15 @@ export default function AdminSettingsPage() {
       await api.adminUpdateSettings({ theme_color: themeColor });
       refreshSettings();
       toast.success("Theme saved");
+    } catch (err: any) { toast.error(err.message); }
+    finally { setSaving(false); }
+  };
+
+  const saveSeoFiles = async () => {
+    setSaving(true);
+    try {
+      await api.adminSaveSeoFiles(seoFiles);
+      toast.success("SEO files saved and published");
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(false); }
   };
@@ -331,6 +345,93 @@ export default function AdminSettingsPage() {
 
                 <div className="flex justify-end pt-2">
                   <SaveBtn loading={saving} onClick={saveSEO} />
+                </div>
+              </div>
+            )}
+
+            {/* ── SEO FILES TAB ── */}
+            {tab === "seofiles" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="font-bold text-gray-900 text-base">SEO Files</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Paste your file contents below. Files are saved to your server and served at the root URL (e.g. <code className="text-xs bg-gray-100 px-1 rounded">/sitemap.xml</code>).
+                  </p>
+                </div>
+
+                {/* sitemap.xml */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sitemap XML</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-gray-700">sitemap.xml content</label>
+                      <span className="text-xs text-gray-400 bg-white border border-gray-200 rounded px-2 py-0.5 font-mono">served at /sitemap.xml</span>
+                    </div>
+                    <p className="text-xs text-gray-400">Paste your full XML sitemap. Generate one from Google Search Console or tools like screaming frog.</p>
+                    <textarea
+                      rows={8}
+                      value={seoFiles.sitemap_xml}
+                      onChange={e => setSeoFiles(f => ({ ...f, sitemap_xml: e.target.value }))}
+                      placeholder={`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://yourdomain.com/</loc>\n    <priority>1.0</priority>\n  </url>\n</urlset>`}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* sitemap.html */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sitemap HTML</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-gray-700">sitemap.html content</label>
+                      <span className="text-xs text-gray-400 bg-white border border-gray-200 rounded px-2 py-0.5 font-mono">served at /sitemap.html</span>
+                    </div>
+                    <p className="text-xs text-gray-400">An HTML version of your sitemap for human-readable browsing. Optional.</p>
+                    <textarea
+                      rows={6}
+                      value={seoFiles.sitemap_html}
+                      onChange={e => setSeoFiles(f => ({ ...f, sitemap_html: e.target.value }))}
+                      placeholder={`<!DOCTYPE html>\n<html>\n<body>\n  <h1>Sitemap</h1>\n  <ul>\n    <li><a href="/">Home</a></li>\n  </ul>\n</body>\n</html>`}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Google Search Console */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Google Search Console (GSC) Verification</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                    <p className="text-xs text-gray-400">
+                      In Google Search Console, choose <strong>HTML file</strong> verification. Download the file Google provides, then paste the filename and content below.
+                    </p>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">GSC Filename</label>
+                      <input
+                        type="text"
+                        value={seoFiles.gsc_filename}
+                        onChange={e => setSeoFiles(f => ({ ...f, gsc_filename: e.target.value }))}
+                        placeholder="google1234abcd5678efgh.html"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white"
+                      />
+                      {seoFiles.gsc_filename && (
+                        <p className="text-xs text-gray-400 mt-1">Will be served at: <span className="font-mono text-rose-600">/{seoFiles.gsc_filename}</span></p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">GSC File Content</label>
+                      <textarea
+                        rows={4}
+                        value={seoFiles.gsc_content}
+                        onChange={e => setSeoFiles(f => ({ ...f, gsc_content: e.target.value }))}
+                        placeholder="google-site-verification: google1234abcd5678efgh.html"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <SaveBtn loading={saving} onClick={saveSeoFiles} />
                 </div>
               </div>
             )}

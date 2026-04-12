@@ -2,6 +2,8 @@ import { Router } from "express";
 import { pool } from "@workspace/db";
 import { requireAuth, requireAdmin, type AuthRequest } from "./middleware.js";
 import bcrypt from "bcryptjs";
+import { writeFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from "fs";
+import { resolve } from "path";
 
 const router = Router();
 
@@ -125,6 +127,77 @@ router.delete("/users/:id", requireAdmin as any, async (req: AuthRequest, res) =
   try {
     await pool.query("DELETE FROM ec_profiles WHERE user_id=$1", [req.params.id]);
     await pool.query("DELETE FROM ec_users WHERE id=$1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Helper: resolve path to classifieds public folder
+function getPublicDir(): string {
+  // When running: cd artifacts/api-server && node ...
+  // process.cwd() = /path/to/project/artifacts/api-server
+  // ../classifieds/public = /path/to/project/artifacts/classifieds/public
+  return resolve(process.cwd(), "../classifieds/public");
+}
+
+// Admin: get SEO files content
+router.get("/seo-files", requireAdmin as any, async (_req, res) => {
+  try {
+    const keys = ["sitemap_xml", "sitemap_html", "gsc_filename", "gsc_content"];
+    const r = await pool.query(
+      `SELECT key, value FROM ec_settings WHERE key = ANY($1)`,
+      [keys]
+    );
+    const out: Record<string, string> = {};
+    r.rows.forEach((row: any) => { out[row.key] = row.value; });
+    res.json(out);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: save SEO files content — writes to DB + public folder
+router.post("/seo-files", requireAdmin as any, async (req, res) => {
+  const { sitemap_xml, sitemap_html, gsc_filename, gsc_content } = req.body as Record<string, string>;
+  try {
+    const publicDir = getPublicDir();
+    if (!existsSync(publicDir)) mkdirSync(publicDir, { recursive: true });
+
+    // Save to DB
+    const entries: [string, string][] = [
+      ["sitemap_xml", sitemap_xml ?? ""],
+      ["sitemap_html", sitemap_html ?? ""],
+      ["gsc_filename", gsc_filename ?? ""],
+      ["gsc_content", gsc_content ?? ""],
+    ];
+    for (const [key, value] of entries) {
+      await setSetting(key, value);
+    }
+
+    // Write sitemap.xml
+    if (sitemap_xml?.trim()) {
+      writeFileSync(resolve(publicDir, "sitemap.xml"), sitemap_xml, "utf-8");
+    }
+
+    // Write sitemap.html
+    if (sitemap_html?.trim()) {
+      writeFileSync(resolve(publicDir, "sitemap.html"), sitemap_html, "utf-8");
+    }
+
+    // Remove old GSC file(s) before writing new one
+    if (existsSync(publicDir)) {
+      readdirSync(publicDir)
+        .filter(f => f.startsWith("google") && f.endsWith(".html"))
+        .forEach(f => unlinkSync(resolve(publicDir, f)));
+    }
+
+    // Write GSC verification file
+    if (gsc_filename?.trim() && gsc_content?.trim()) {
+      const safeName = gsc_filename.trim().replace(/[^a-zA-Z0-9.\-_]/g, "");
+      writeFileSync(resolve(publicDir, safeName), gsc_content, "utf-8");
+    }
+
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

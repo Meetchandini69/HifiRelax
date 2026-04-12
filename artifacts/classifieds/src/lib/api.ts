@@ -76,6 +76,9 @@ export const api = {
     request(`${API}/classifieds/settings`, { method: "PUT", body: JSON.stringify(body) }),
   adminUpdateProfile: (body: object) =>
     request(`${API}/classifieds/settings/profile`, { method: "PUT", body: JSON.stringify(body) }),
+  adminGetSeoFiles: () => request(`${API}/classifieds/settings/seo-files`),
+  adminSaveSeoFiles: (body: object) =>
+    request(`${API}/classifieds/settings/seo-files`, { method: "POST", body: JSON.stringify(body) }),
 
   // Users (admin)
   adminGetAllUsers: () => request(`${API}/classifieds/settings/users`),
