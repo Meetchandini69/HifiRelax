@@ -7,7 +7,7 @@
 INSERT INTO ec_users (email, password_hash, name, role, status)
 VALUES (
   'admin@eliteescorts.in',
-  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TiGmj2Xr0WBl9CRr5HpQZ5mU9VQu',
+  '$2b$12$6yLpu9cu1Mxd2pmTfP53yO1yg7yHumRdBAagExfwt418DZJorTnHS',
   'Admin',
   'admin',
   'active'
