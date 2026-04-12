@@ -1,16 +1,14 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_22"]
 
 [phases.install]
 cmds = [
-  "npm install -g pnpm@10",
-  "cd ../.. && pnpm install --no-frozen-lockfile --filter @workspace/api-server..."
+  "npm install -g corepack && corepack enable && corepack prepare pnpm@10.26.1 --activate && cd ../.. && pnpm install --no-frozen-lockfile"
 ]
 
 [phases.build]
 cmds = [
-  "cd ../.. && pnpm --filter @workspace/api-server run build",
-  "cp -r ../../schema ./schema 2>/dev/null || cp -r schema ./schema 2>/dev/null || true"
+  "cd ../.. && pnpm --filter @workspace/api-server run build"
 ]
 
 [start]
