@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import { toast } from "sonner";
-import { Plus, Clock, CheckCircle, XCircle, Trash2, ExternalLink, Eye, AlertCircle, Crown, Gem, Zap, Settings, Lock } from "lucide-react";
+import { Plus, Clock, CheckCircle, XCircle, Trash2, ExternalLink, Eye, AlertCircle, Crown, Gem, Zap, Settings, Lock, Pencil } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -200,13 +200,23 @@ export default function DashboardPage() {
                       </>
                     )}
                     {/* Edit available for all statuses — re-submits for approval */}
-                    <Link
-                      href={`/dashboard/post?edit=${p.id}`}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title={p.status === "approved" ? "Edit (will re-submit for approval)" : "Edit listing"}
-                    >
-                      <Eye size={15} />
-                    </Link>
+                    {p.status === "approved" ? (
+                      <Link
+                        href={`/dashboard/post?edit=${p.id}`}
+                        className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200"
+                        title="Editing will re-submit your listing for admin approval"
+                      >
+                        <Pencil size={12} /> Edit
+                      </Link>
+                    ) : (
+                      <Link
+                        href={`/dashboard/post?edit=${p.id}`}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit listing"
+                      >
+                        <Pencil size={15} />
+                      </Link>
+                    )}
                     <button onClick={() => handleDelete(p.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                       <Trash2 size={15} />
                     </button>

@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import ImageCropper from "@/components/ImageCropper";
 import { toast } from "sonner";
-import { Upload, X, Plus, ChevronLeft } from "lucide-react";
+import { Upload, X, Plus, ChevronLeft, AlertCircle } from "lucide-react";
 
 function applyWatermark(base64: string, text: string): Promise<string> {
   return new Promise(resolve => {
@@ -64,16 +64,26 @@ export default function PostProfilePage() {
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [galleryBoostActive, setGalleryBoostActive] = useState(false);
+  const [editingApproved, setEditingApproved] = useState(false);
+  const [baseMaxPhotos, setBaseMaxPhotos] = useState(1); // default to independent limit
   const [form, setForm] = useState({
     title: "", name: "", description: "", age: "",
     phone: "", whatsapp: "", telegram: "", location_id: "",
   });
 
-  const maxPhotos = galleryBoostActive ? 20 : 6;
+  // gallery boost unlocks up to 20; otherwise use role-based limit
+  const maxPhotos = galleryBoostActive ? 20 : baseMaxPhotos;
 
   useEffect(() => {
     if (!authLoading && !user) nav("/login");
   }, [user, authLoading]);
+
+  // Fetch role-based photo limit
+  useEffect(() => {
+    api.getMyLimits()
+      .then((limits: any) => setBaseMaxPhotos(limits.maxPhotos ?? 1))
+      .catch(() => setBaseMaxPhotos(1));
+  }, []);
 
   useEffect(() => {
     api.getLocations().then(setLocations).catch(() => {});
@@ -85,6 +95,7 @@ export default function PostProfilePage() {
           setPhotos(p.photos || []);
           setSelectedServices(p.services || []);
           setGalleryBoostActive(p.gallery_boost_active || false);
+          setEditingApproved(p.status === "approved");
         }
       });
     }
@@ -147,7 +158,16 @@ export default function PostProfilePage() {
           <ChevronLeft size={16} /> Back to Dashboard
         </button>
         <h1 className="text-xl font-bold text-gray-900 mb-1">{editId ? "Edit Your Listing" : "Post New Listing"}</h1>
-        <p className="text-sm text-gray-500 mb-6">Fill in all details. Your profile will appear after admin approval.</p>
+        <p className="text-sm text-gray-500 mb-3">Fill in all details. Your profile will appear after admin approval.</p>
+
+        {editingApproved && (
+          <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5">
+            <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">Heads up:</span> Saving any changes will move your listing back to <span className="font-semibold">pending review</span> until an admin re-approves it. It will be hidden from the site during that time.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Photos */}
