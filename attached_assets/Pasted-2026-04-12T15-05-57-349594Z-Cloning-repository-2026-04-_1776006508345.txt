@@ -1,0 +1,129 @@
+2026-04-12T15:05:57.349594Z	Cloning repository...
+2026-04-12T15:05:58.319112Z	From https://github.com/Meetchandini69/HifiRelax
+2026-04-12T15:05:58.319442Z	 * branch            e1d6b67c3c046189b17781a0eaf1479192fb398e -> FETCH_HEAD
+2026-04-12T15:05:58.319492Z	
+2026-04-12T15:05:58.376517Z	HEAD is now at e1d6b67 Add automatic database seeding on server startup
+2026-04-12T15:05:58.377017Z	
+2026-04-12T15:05:58.42167Z	
+2026-04-12T15:05:58.422013Z	Using v2 root directory strategy
+2026-04-12T15:05:58.435209Z	Success: Finished cloning repository files
+2026-04-12T15:05:59.772401Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-04-12T15:05:59.77286Z	
+2026-04-12T15:06:00.876238Z	No Wrangler configuration file found. Continuing.
+2026-04-12T15:06:01.046972Z	Detected the following tools from environment: pnpm@10.26.1, nodejs@22.16.0, npm@10.9.2
+2026-04-12T15:06:01.594146Z	Preparing pnpm@10.26.1 for immediate activation...
+2026-04-12T15:06:03.637854Z	Installing project dependencies: pnpm install
+2026-04-12T15:06:04.156797Z	Scope: all 11 workspace projects
+2026-04-12T15:06:04.290694Z	../..                                    | Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-04-12T15:06:04.34679Z	../..                                    | +625 ++++++++++++++++++++++++++++++++
+2026-04-12T15:06:05.290541Z	../..                                    | Progress: resolved 625, reused 0, downloaded 177, added 157
+2026-04-12T15:06:06.294767Z	../..                                    | Progress: resolved 625, reused 0, downloaded 400, added 383
+2026-04-12T15:06:07.291444Z	../..                                    | Progress: resolved 625, reused 0, downloaded 423, added 402
+2026-04-12T15:06:08.298293Z	../..                                    | Progress: resolved 625, reused 0, downloaded 530, added 447
+2026-04-12T15:06:08.771079Z	../..                                    | Progress: resolved 625, reused 0, downloaded 625, added 625, done
+2026-04-12T15:06:09.014097Z	.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-04-12T15:06:09.111522Z	.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-04-12T15:06:09.461868Z	
+2026-04-12T15:06:09.462149Z	dependencies:
+2026-04-12T15:06:09.462292Z	+ react-easy-crop 5.5.7
+2026-04-12T15:06:09.462395Z	
+2026-04-12T15:06:09.464293Z	devDependencies:
+2026-04-12T15:06:09.464392Z	+ @hookform/resolvers 3.10.0
+2026-04-12T15:06:09.464433Z	+ @radix-ui/react-accordion 1.2.12
+2026-04-12T15:06:09.464476Z	+ @radix-ui/react-alert-dialog 1.1.15
+2026-04-12T15:06:09.46452Z	+ @radix-ui/react-aspect-ratio 1.1.8
+2026-04-12T15:06:09.464561Z	+ @radix-ui/react-avatar 1.1.11
+2026-04-12T15:06:09.4646Z	+ @radix-ui/react-checkbox 1.3.3
+2026-04-12T15:06:09.464845Z	+ @radix-ui/react-collapsible 1.1.12
+2026-04-12T15:06:09.464906Z	+ @radix-ui/react-context-menu 2.2.16
+2026-04-12T15:06:09.464953Z	+ @radix-ui/react-dialog 1.1.15
+2026-04-12T15:06:09.464984Z	+ @radix-ui/react-dropdown-menu 2.1.16
+2026-04-12T15:06:09.465021Z	+ @radix-ui/react-hover-card 1.1.15
+2026-04-12T15:06:09.46505Z	+ @radix-ui/react-label 2.1.8
+2026-04-12T15:06:09.465077Z	+ @radix-ui/react-menubar 1.1.16
+2026-04-12T15:06:09.465105Z	+ @radix-ui/react-navigation-menu 1.2.14
+2026-04-12T15:06:09.465166Z	+ @radix-ui/react-popover 1.1.15
+2026-04-12T15:06:09.465221Z	+ @radix-ui/react-progress 1.1.8
+2026-04-12T15:06:09.465316Z	+ @radix-ui/react-radio-group 1.3.8
+2026-04-12T15:06:09.465388Z	+ @radix-ui/react-scroll-area 1.2.10
+2026-04-12T15:06:09.465477Z	+ @radix-ui/react-select 2.2.6
+2026-04-12T15:06:09.465538Z	+ @radix-ui/react-separator 1.1.8
+2026-04-12T15:06:09.465589Z	+ @radix-ui/react-slider 1.3.6
+2026-04-12T15:06:09.465657Z	+ @radix-ui/react-slot 1.2.4
+2026-04-12T15:06:09.46573Z	+ @radix-ui/react-switch 1.2.6
+2026-04-12T15:06:09.465805Z	+ @radix-ui/react-tabs 1.1.13
+2026-04-12T15:06:09.465906Z	+ @radix-ui/react-toast 1.2.15
+2026-04-12T15:06:09.465999Z	+ @radix-ui/react-toggle 1.1.10
+2026-04-12T15:06:09.466114Z	+ @radix-ui/react-toggle-group 1.1.11
+2026-04-12T15:06:09.466289Z	+ @radix-ui/react-tooltip 1.2.8
+2026-04-12T15:06:09.466382Z	+ @replit/vite-plugin-cartographer 0.5.1
+2026-04-12T15:06:09.466471Z	+ @replit/vite-plugin-dev-banner 0.1.2
+2026-04-12T15:06:09.466985Z	+ @replit/vite-plugin-runtime-error-modal 0.0.6
+2026-04-12T15:06:09.46771Z	+ @tailwindcss/typography 0.5.19
+2026-04-12T15:06:09.467762Z	+ @tailwindcss/vite 4.2.1
+2026-04-12T15:06:09.467809Z	+ @tanstack/react-query 5.90.21
+2026-04-12T15:06:09.467861Z	+ @testing-library/dom 10.4.1
+2026-04-12T15:06:09.467904Z	+ @testing-library/jest-dom 6.9.1
+2026-04-12T15:06:09.467958Z	+ @testing-library/react 16.3.2
+2026-04-12T15:06:09.467998Z	+ @testing-library/user-event 14.6.1
+2026-04-12T15:06:09.468032Z	+ @types/node 25.3.5
+2026-04-12T15:06:09.468062Z	+ @types/react 19.2.14
+2026-04-12T15:06:09.468106Z	+ @types/react-dom 19.2.3
+2026-04-12T15:06:09.468189Z	+ @vitejs/plugin-react 5.1.4
+2026-04-12T15:06:09.468236Z	+ @vitest/coverage-v8 4.1.4
+2026-04-12T15:06:09.468613Z	+ class-variance-authority 0.7.1
+2026-04-12T15:06:09.46866Z	+ clsx 2.1.1
+2026-04-12T15:06:09.46869Z	+ cmdk 1.1.1
+2026-04-12T15:06:09.468719Z	+ date-fns 3.6.0
+2026-04-12T15:06:09.468862Z	+ embla-carousel-react 8.6.0
+2026-04-12T15:06:09.468908Z	+ framer-motion 12.35.1
+2026-04-12T15:06:09.468936Z	+ input-otp 1.4.2
+2026-04-12T15:06:09.468968Z	+ jsdom 29.0.2
+2026-04-12T15:06:09.469001Z	+ lucide-react 0.545.0
+2026-04-12T15:06:09.469059Z	+ next-themes 0.4.6
+2026-04-12T15:06:09.469091Z	+ react 19.1.0
+2026-04-12T15:06:09.469124Z	+ react-day-picker 9.14.0
+2026-04-12T15:06:09.46918Z	+ react-dom 19.1.0
+2026-04-12T15:06:09.469225Z	+ react-hook-form 7.71.2
+2026-04-12T15:06:09.469273Z	+ react-icons 5.6.0
+2026-04-12T15:06:09.469323Z	+ react-resizable-panels 2.1.9
+2026-04-12T15:06:09.469416Z	+ recharts 2.15.4
+2026-04-12T15:06:09.469496Z	+ sonner 2.0.7
+2026-04-12T15:06:09.469555Z	+ tailwind-merge 3.5.0
+2026-04-12T15:06:09.46959Z	+ tailwindcss 4.2.1
+2026-04-12T15:06:09.469629Z	+ tw-animate-css 1.4.0
+2026-04-12T15:06:09.46968Z	+ vaul 1.1.2
+2026-04-12T15:06:09.469734Z	+ vite 7.3.1
+2026-04-12T15:06:09.469788Z	+ vitest 4.1.4
+2026-04-12T15:06:09.469836Z	+ wouter 3.9.0
+2026-04-12T15:06:09.469919Z	+ zod 3.25.76
+2026-04-12T15:06:09.469979Z	
+2026-04-12T15:06:09.534849Z	../.. preinstall$ node scripts/preinstall.cjs
+2026-04-12T15:06:09.576352Z	../.. preinstall: Done
+2026-04-12T15:06:09.747171Z	Done in 5.9s using pnpm v10.26.1
+2026-04-12T15:06:09.796964Z	Executing user command: pnpm install && pnpm run build
+2026-04-12T15:06:10.356952Z	Scope: all 11 workspace projects
+2026-04-12T15:06:11.680889Z	
+2026-04-12T15:06:11.759637Z	../.. preinstall$ node scripts/preinstall.cjs
+2026-04-12T15:06:11.803297Z	../.. preinstall: Done
+2026-04-12T15:06:11.955168Z	Done in 1.9s using pnpm v10.26.1
+2026-04-12T15:06:12.500109Z	
+2026-04-12T15:06:12.500473Z	> @workspace/classifieds@0.0.0 build /opt/buildhome/repo/artifacts/classifieds
+2026-04-12T15:06:12.500552Z	> vite build --config vite.config.ts
+2026-04-12T15:06:12.500596Z	
+2026-04-12T15:06:12.930703Z	[31mfailed to load config from /opt/buildhome/repo/artifacts/classifieds/vite.config.ts[39m
+2026-04-12T15:06:12.932386Z	[31merror during build:
+2026-04-12T15:06:12.932669Z	Error: PORT environment variable is required but was not provided.
+2026-04-12T15:06:12.93274Z	    at file:///opt/buildhome/repo/artifacts/classifieds/node_modules/.vite-temp/vite.config.ts.timestamp-1776006372759-25e445a4ecea3.mjs:10:9
+2026-04-12T15:06:12.932828Z	    at ModuleJob.run (node:internal/modules/esm/module_job:274:25)
+2026-04-12T15:06:12.932924Z	    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+2026-04-12T15:06:12.932988Z	    at async loadConfigFromBundledFile (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:35909:12)
+2026-04-12T15:06:12.933065Z	    at async bundleAndLoadConfigFile (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:35797:17)
+2026-04-12T15:06:12.93311Z	    at async loadConfigFromFile (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:35764:42)
+2026-04-12T15:06:12.933141Z	    at async resolveConfig (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:35413:22)
+2026-04-12T15:06:12.933192Z	    at async createBuilder (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:33875:19)
+2026-04-12T15:06:12.933257Z	    at async CAC.<anonymous> (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/cli.js:629:10)[39m
+2026-04-12T15:06:12.965169Z	 ELIFECYCLE  Command failed with exit code 1.
+2026-04-12T15:06:12.996196Z	Failed: Error while executing user command. Exited with error code: 1
+2026-04-12T15:06:13.00201Z	Failed: build command exited with code: 1
+2026-04-12T15:06:13.742717Z	Failed: error occurred while running build command
