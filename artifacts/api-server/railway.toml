@@ -1,5 +1,6 @@
 [build]
-builder = "NIXPACKS"
+builder = "nixpacks"
+nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
 startCommand = "node --import=./load-env.mjs ./dist/index.mjs"
