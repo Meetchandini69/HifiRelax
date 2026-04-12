@@ -1,0 +1,7 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "node --import=./load-env.mjs ./dist/index.mjs"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
