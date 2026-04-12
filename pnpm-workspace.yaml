@@ -30,14 +30,3 @@ catalog:
 
 autoInstallPeers: false
 
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
-  - msw
-  - unrs-resolver
-
-overrides:
-  # drizzle-kit uses an older vulnerable esbuild loader — replace with tsx
-  "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
-  # Pin esbuild version used across the workspace
-  esbuild: "0.27.3"
