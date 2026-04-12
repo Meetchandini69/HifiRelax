@@ -53,6 +53,7 @@ export const api = {
   // Profiles (user)
   postProfile: (body: object) => request(`${API}/classifieds/profiles`, { method: "POST", body: JSON.stringify(body) }),
   getMyProfiles: () => request(`${API}/classifieds/profiles/mine`),
+  getMyProfileById: (id: number) => request(`${API}/classifieds/profiles/mine/${id}`),
   updateProfile: (id: number, body: object) => request(`${API}/classifieds/profiles/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   deleteProfile: (id: number) => request(`${API}/classifieds/profiles/${id}`, { method: "DELETE" }),
 

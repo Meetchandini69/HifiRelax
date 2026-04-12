@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import { toast } from "sonner";
-import { Plus, Clock, CheckCircle, XCircle, Trash2, ExternalLink, Eye, AlertCircle, Crown, Gem, Zap, Settings, Lock, Pencil } from "lucide-react";
+import { Plus, Clock, CheckCircle, XCircle, Trash2, ExternalLink, Eye, AlertCircle, Crown, Gem, Zap, Settings, Lock, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -20,11 +20,14 @@ const BOOST_BADGE: Record<string, { cls: string; icon: React.ReactNode }> = {
   featured: { cls: "bg-blue-100   text-blue-700   border-blue-200",   icon: <Zap  size={10} className="inline mr-0.5" /> },
 };
 
+const PAGE_SIZE = 14;
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [, nav] = useLocation();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   useEffect(() => {
@@ -53,6 +56,9 @@ export default function DashboardPage() {
     p.boost_expires_at && new Date(p.boost_expires_at) > new Date()
   );
   const atFreeLimit = activeListings.length >= 1 && !hasBoostedProfile && !["supervisor", "admin"].includes(user?.role || "");
+
+  const totalPages = Math.max(1, Math.ceil(profiles.length / PAGE_SIZE));
+  const pagedProfiles = profiles.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (authLoading) return null;
 
@@ -132,7 +138,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {profiles.map(p => {
+            {pagedProfiles.map(p => {
               const isActive = p.active_boost_slug && p.boost_expires_at && new Date(p.boost_expires_at) > new Date();
               const boostBadge = isActive ? BOOST_BADGE[p.active_boost_slug] : null;
               return (
@@ -224,6 +230,44 @@ export default function DashboardPage() {
                 </div>
               );
             })}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs text-gray-400">
+                  Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, profiles.length)} of {profiles.length} listings
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                    <button
+                      key={n}
+                      onClick={() => setPage(n)}
+                      className={`w-8 h-8 rounded-lg text-xs font-semibold border transition-colors ${
+                        n === page
+                          ? "bg-rose-600 text-white border-rose-600"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

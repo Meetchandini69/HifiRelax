@@ -143,6 +143,24 @@ router.get("/mine", requireAuth as any, async (req: AuthRequest, res) => {
   }
 });
 
+// User: fetch a single owned profile by ID (used by edit form to pre-populate)
+router.get("/mine/:id", requireAuth as any, async (req: AuthRequest, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.*, l.state, l.city, l.area, l.area_slug,
+              CASE WHEN p.gallery_boost_expires_at > NOW() THEN true ELSE false END as gallery_boost_active
+       FROM ec_profiles p
+       LEFT JOIN ec_locations l ON p.location_id=l.id
+       WHERE p.id=$1 AND p.user_id=$2`,
+      [req.params.id, req.user!.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // User: update own profile (allowed any time; if approved → goes back to pending for re-approval)
 router.put("/:id", requireAuth as any, async (req: AuthRequest, res) => {
   const { title, name, description, age, phone, whatsapp, telegram, services, photos, location_id } = req.body;

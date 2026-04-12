@@ -88,16 +88,22 @@ export default function PostProfilePage() {
   useEffect(() => {
     api.getLocations().then(setLocations).catch(() => {});
     if (editId) {
-      api.getMyProfiles().then(profiles => {
-        const p = profiles.find((x: any) => x.id === editId);
-        if (p) {
-          setForm({ title: p.title, name: p.name, description: p.description || "", age: p.age?.toString() || "", phone: p.phone || "", whatsapp: p.whatsapp || "", telegram: p.telegram || "", location_id: p.location_id?.toString() || "" });
-          setPhotos(p.photos || []);
-          setSelectedServices(p.services || []);
-          setGalleryBoostActive(p.gallery_boost_active || false);
-          setEditingApproved(p.status === "approved");
-        }
-      });
+      api.getMyProfileById(editId).then((p: any) => {
+        setForm({
+          title: p.title ?? "",
+          name: p.name ?? "",
+          description: p.description ?? "",
+          age: p.age?.toString() ?? "",
+          phone: p.phone ?? "",
+          whatsapp: p.whatsapp ?? "",
+          telegram: p.telegram ?? "",
+          location_id: p.location_id?.toString() ?? "",
+        });
+        setPhotos(Array.isArray(p.photos) ? p.photos : []);
+        setSelectedServices(Array.isArray(p.services) ? p.services : []);
+        setGalleryBoostActive(p.gallery_boost_active || false);
+        setEditingApproved(p.status === "approved");
+      }).catch(() => toast.error("Could not load listing data"));
     }
   }, [editId]);
 
