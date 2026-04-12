@@ -249,6 +249,41 @@ router.delete("/admin/apply/:profileId", requireAdmin as any, async (req: any, r
   }
 });
 
+// Admin: seed default boost plans (idempotent — only inserts if empty)
+router.post("/admin/seed-plans", requireAdmin as any, async (_req: any, res) => {
+  try {
+    await pool.query(`
+      INSERT INTO ec_boost_plans (name, slug, badge_label, badge_color, sort_priority, description, price, duration_days, is_active)
+      VALUES
+        ('Top Ad / Featured Listing', 'top_ad', '⭐ Trending', 'rose', 100,
+         'Your ad appears at the top of selected state/city/area pages with a Trending badge. Multiple purchases stack in purchase order.',
+         299, 7, true),
+        ('Gallery Boost', 'gallery_boost', '🖼 Gallery', 'violet', 0,
+         'Add-on: Unlock 10–20 photos with slideshow format instead of 3–5 photos.',
+         99, 7, true)
+      ON CONFLICT (slug) DO NOTHING
+    `);
+    const existing = await pool.query(
+      `SELECT COUNT(*) FROM ec_boost_plan_tiers WHERE plan_slug IN ('top_ad','gallery_boost')`
+    );
+    if (parseInt(existing.rows[0].count) === 0) {
+      await pool.query(`
+        INSERT INTO ec_boost_plan_tiers (plan_slug, tier_slug, label, duration_days, price)
+        VALUES
+          ('top_ad',       '1w', '1 Week',  7,  299),
+          ('top_ad',       '2w', '2 Weeks', 14, 499),
+          ('top_ad',       '1m', '1 Month', 30, 899),
+          ('gallery_boost','1w', '1 Week',  7,  99),
+          ('gallery_boost','2w', '2 Weeks', 14, 149),
+          ('gallery_boost','1m', '1 Month', 30, 199)
+      `);
+    }
+    res.json({ success: true, message: "Default boost plans seeded." });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Admin: get boost plans with tiers
 router.get("/admin/plans", requireAdmin as any, async (_req: any, res) => {
   try {

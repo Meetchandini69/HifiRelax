@@ -114,6 +114,7 @@ export const api = {
     const qs = type ? `?type=${type}` : "";
     return request(`${API}/classifieds/boosts/admin/apply/${profileId}${qs}`, { method: "DELETE" });
   },
+  adminSeedPlans: () => request(`${API}/classifieds/boosts/admin/seed-plans`, { method: "POST" }),
   adminGetBoostPlans: () => request(`${API}/classifieds/boosts/admin/plans`),
   adminUpdateBoostPlan: (id: number, body: object) =>
     request(`${API}/classifieds/boosts/admin/plans/${id}`, { method: "PUT", body: JSON.stringify(body) }),

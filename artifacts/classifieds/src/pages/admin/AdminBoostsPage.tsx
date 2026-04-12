@@ -412,8 +412,19 @@ export default function AdminBoostsPage() {
             {!plansLoading && !plansError && plans.length === 0 && (
               <div className="bg-white border border-dashed border-gray-300 rounded-2xl text-center py-12">
                 <Settings2 size={32} className="text-gray-200 mx-auto mb-3" />
-                <p className="text-gray-400 text-sm font-medium">No boost plans found</p>
-                <button onClick={loadPlans} className="mt-3 text-xs font-semibold text-rose-600 hover:underline">Retry</button>
+                <p className="text-gray-400 text-sm font-medium mb-1">No boost plans found</p>
+                <p className="text-gray-400 text-xs mb-4">Click below to insert the default Top Ad and Gallery Boost plans.</p>
+                <button
+                  onClick={() => {
+                    api.adminSeedPlans()
+                      .then(() => { toast.success("Default plans seeded!"); loadPlans(); })
+                      .catch(err => toast.error("Seed failed: " + err.message));
+                  }}
+                  className="bg-rose-600 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-rose-700 mr-2"
+                >
+                  Seed Default Plans
+                </button>
+                <button onClick={loadPlans} className="text-xs font-semibold text-gray-500 hover:underline">Retry</button>
               </div>
             )}
           <div className="grid sm:grid-cols-2 gap-4">
