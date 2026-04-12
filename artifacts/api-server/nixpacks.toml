@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = [
+  "npm install -g pnpm@10",
+  "cd ../.. && pnpm install --no-frozen-lockfile --filter @workspace/api-server...",
+  "cd ../.. && pnpm --filter @workspace/api-server run build"
+]
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = "node --import=./load-env.mjs ./dist/index.mjs"
