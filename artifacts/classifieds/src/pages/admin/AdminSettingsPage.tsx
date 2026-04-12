@@ -400,33 +400,76 @@ export default function AdminSettingsPage() {
                 {/* Google Search Console */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Google Search Console (GSC) Verification</p>
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-4">
                     <p className="text-xs text-gray-400">
-                      In Google Search Console, choose <strong>HTML file</strong> verification. Download the file Google provides, then paste the filename and content below.
+                      In Google Search Console, choose <strong>HTML file</strong> verification. Download the file Google provides, then upload it below — the filename and content will be filled in automatically.
                     </p>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">GSC Filename</label>
+
+                    {/* File upload drop zone */}
+                    <label
+                      htmlFor="gsc-file-upload"
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = ev => setSeoFiles(f => ({ ...f, gsc_filename: file.name, gsc_content: ev.target?.result as string ?? "" }));
+                        reader.readAsText(file);
+                      }}
+                      className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-rose-200 rounded-xl p-6 cursor-pointer bg-white hover:bg-rose-50 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-rose-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                      </svg>
+                      <span className="text-sm font-medium text-gray-600">
+                        {seoFiles.gsc_filename ? (
+                          <span className="text-rose-600 font-mono">{seoFiles.gsc_filename}</span>
+                        ) : (
+                          <>Click to upload or drag &amp; drop the HTML file</>
+                        )}
+                      </span>
+                      <span className="text-xs text-gray-400">.html files only</span>
                       <input
-                        type="text"
-                        value={seoFiles.gsc_filename}
-                        onChange={e => setSeoFiles(f => ({ ...f, gsc_filename: e.target.value }))}
-                        placeholder="google1234abcd5678efgh.html"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white"
+                        id="gsc-file-upload"
+                        type="file"
+                        accept=".html,text/html"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = ev => setSeoFiles(f => ({ ...f, gsc_filename: file.name, gsc_content: ev.target?.result as string ?? "" }));
+                          reader.readAsText(file);
+                        }}
                       />
-                      {seoFiles.gsc_filename && (
-                        <p className="text-xs text-gray-400 mt-1">Will be served at: <span className="font-mono text-rose-600">/{seoFiles.gsc_filename}</span></p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">GSC File Content</label>
-                      <textarea
-                        rows={4}
-                        value={seoFiles.gsc_content}
-                        onChange={e => setSeoFiles(f => ({ ...f, gsc_content: e.target.value }))}
-                        placeholder="google-site-verification: google1234abcd5678efgh.html"
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white resize-none"
-                      />
-                    </div>
+                    </label>
+
+                    {/* Preview after upload */}
+                    {seoFiles.gsc_filename && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">Will be served at:</span>
+                          <span className="font-mono text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded px-2 py-0.5">/{seoFiles.gsc_filename}</span>
+                          <button
+                            type="button"
+                            onClick={() => setSeoFiles(f => ({ ...f, gsc_filename: "", gsc_content: "" }))}
+                            className="ml-auto text-xs text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">File content (auto-filled — edit if needed)</label>
+                          <textarea
+                            rows={3}
+                            value={seoFiles.gsc_content}
+                            onChange={e => setSeoFiles(f => ({ ...f, gsc_content: e.target.value }))}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white resize-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
