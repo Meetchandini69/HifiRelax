@@ -115,10 +115,12 @@ export default function AdminUsersPage() {
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
                 {ROLES.map(r => <option key={r}>{r}</option>)}
               </select>
-              <select value={newUser.account_type} onChange={e => setNewUser({ ...newUser, account_type: e.target.value })}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                {ACCOUNT_TYPES.map(t => <option key={t}>{t}</option>)}
-              </select>
+              {!["supervisor", "admin"].includes(newUser.role) && (
+                <select value={newUser.account_type} onChange={e => setNewUser({ ...newUser, account_type: e.target.value })}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  {ACCOUNT_TYPES.map(t => <option key={t}>{t}</option>)}
+                </select>
+              )}
             </div>
             <div className="flex gap-2">
               <button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">Create</button>
@@ -175,12 +177,20 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       {editId === u.id ? (
-                        <select value={editData.account_type} onChange={e => setEditData({ ...editData, account_type: e.target.value })}
-                          className="border border-gray-300 rounded px-2 py-1 text-xs">
-                          {ACCOUNT_TYPES.map(t => <option key={t}>{t}</option>)}
-                        </select>
+                        ["supervisor", "admin"].includes(editData.role || "") ? (
+                          <span className="text-xs text-gray-400 italic">N/A</span>
+                        ) : (
+                          <select value={editData.account_type} onChange={e => setEditData({ ...editData, account_type: e.target.value })}
+                            className="border border-gray-300 rounded px-2 py-1 text-xs">
+                            {ACCOUNT_TYPES.map(t => <option key={t}>{t}</option>)}
+                          </select>
+                        )
                       ) : (
-                        <span className="text-xs text-gray-600">{u.account_type || "independent"}</span>
+                        ["supervisor", "admin"].includes(u.role) ? (
+                          <span className="text-xs text-gray-400 italic">N/A</span>
+                        ) : (
+                          <span className="text-xs text-gray-600">{u.account_type || "independent"}</span>
+                        )
                       )}
                     </td>
                     <td className="px-4 py-3">
