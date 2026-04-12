@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS ec_users (
   password_hash TEXT NOT NULL,
   name          VARCHAR(255) NOT NULL,
   role          VARCHAR(50)  NOT NULL DEFAULT 'user',
+  account_type  VARCHAR(20)  NOT NULL DEFAULT 'independent',
   status        VARCHAR(20)  NOT NULL DEFAULT 'active',
   created_at    TIMESTAMP DEFAULT NOW()
 );
@@ -119,9 +120,13 @@ CREATE TABLE IF NOT EXISTS ec_page_content (
 -- ============================================================
 -- Migrations: add columns that may be missing on older DBs
 -- ============================================================
+ALTER TABLE ec_users
+  ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) NOT NULL DEFAULT 'independent';
+
 ALTER TABLE ec_profiles
   ADD COLUMN IF NOT EXISTS boost_approved_at        TIMESTAMP,
-  ADD COLUMN IF NOT EXISTS gallery_boost_expires_at TIMESTAMP;
+  ADD COLUMN IF NOT EXISTS gallery_boost_expires_at TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS verified                 BOOLEAN NOT NULL DEFAULT FALSE;
 
 ALTER TABLE ec_boost_requests
   ADD COLUMN IF NOT EXISTS tier_slug     VARCHAR(20),

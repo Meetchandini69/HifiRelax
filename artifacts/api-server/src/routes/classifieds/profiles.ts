@@ -84,28 +84,30 @@ router.post("/", requireAuth as any, async (req: AuthRequest, res) => {
     return res.status(400).json({ error: "title, name, location_id are required" });
   }
   try {
-    // Free user limit: max 1 active listing if no boosted profile
-    if (req.user!.role !== "admin") {
+    const userRow = await pool.query("SELECT role, account_type FROM ec_users WHERE id=$1", [req.user!.id]);
+    const { role, account_type } = userRow.rows[0] ?? { role: "user", account_type: "independent" };
+
+    // Determine max listings allowed
+    // admin/supervisor = unlimited; agent = 3; independent (default) = 1
+    let maxListings = 1;
+    if (role === "admin" || role === "supervisor") maxListings = Infinity;
+    else if (account_type === "agent") maxListings = 3;
+
+    if (maxListings !== Infinity) {
       const countQ = await pool.query(
         "SELECT COUNT(*) FROM ec_profiles WHERE user_id=$1 AND status IN ('pending','approved')",
         [req.user!.id]
       );
       const count = parseInt(countQ.rows[0].count);
-      if (count >= 1) {
-        // Check if any profile has an active boost
-        const boostQ = await pool.query(
-          "SELECT COUNT(*) FROM ec_profiles WHERE user_id=$1 AND boost_expires_at > NOW()",
-          [req.user!.id]
-        );
-        const hasBoosted = parseInt(boostQ.rows[0].count) > 0;
-        if (!hasBoosted) {
-          return res.status(403).json({
-            error: "Free plan allows only 1 active listing. Boost your existing listing to unlock more slots.",
-            code: "FREE_LIMIT_REACHED",
-          });
-        }
+      if (count >= maxListings) {
+        const limitLabel = account_type === "agent" ? "3 listings (Agent plan)" : "1 listing (Independent plan)";
+        return res.status(403).json({
+          error: `Your account allows a maximum of ${limitLabel}. Upgrade your plan or boost your existing listing.`,
+          code: "LISTING_LIMIT_REACHED",
+        });
       }
     }
+
     const slug = toSlug(title);
     const result = await pool.query(
       `INSERT INTO ec_profiles (user_id, title, name, description, age, phone, whatsapp, telegram, services, photos, location_id, slug, status)
@@ -141,16 +143,16 @@ router.get("/mine", requireAuth as any, async (req: AuthRequest, res) => {
   }
 });
 
-// User: update own profile (if pending)
+// User: update own profile (allowed any time; if approved → goes back to pending for re-approval)
 router.put("/:id", requireAuth as any, async (req: AuthRequest, res) => {
   const { title, name, description, age, phone, whatsapp, telegram, services, photos, location_id } = req.body;
   try {
     const own = await pool.query("SELECT id, status FROM ec_profiles WHERE id=$1 AND user_id=$2", [req.params.id, req.user!.id]);
     if (own.rows.length === 0) return res.status(403).json({ error: "Not found or not yours" });
-    if (own.rows[0].status === "approved") return res.status(400).json({ error: "Cannot edit approved profile" });
     const slug = toSlug(title);
+    // Any edit resets status to pending so admin re-approves changes
     const result = await pool.query(
-      `UPDATE ec_profiles SET title=$1, name=$2, description=$3, age=$4, phone=$5, whatsapp=$6, telegram=$7, services=$8, photos=$9, location_id=$10, slug=$11, status='pending', updated_at=NOW() WHERE id=$12 RETURNING *`,
+      `UPDATE ec_profiles SET title=$1, name=$2, description=$3, age=$4, phone=$5, whatsapp=$6, telegram=$7, services=$8, photos=$9, location_id=$10, slug=$11, status='pending', rejection_reason=NULL, updated_at=NOW() WHERE id=$12 RETURNING *`,
       [title, name, description, age, phone, whatsapp, telegram, services || [], photos || [], location_id, slug, req.params.id]
     );
     res.json(result.rows[0]);
@@ -236,11 +238,31 @@ router.delete("/admin/:id", requireAdmin as any, async (req: any, res) => {
   }
 });
 
-// Admin: list all users
-router.get("/admin/users", requireAdmin as any, async (_req: any, res) => {
+// Admin: toggle verified badge on a profile
+router.put("/admin/:id/verify", requireAdmin as any, async (req: any, res) => {
+  const { verified } = req.body;
   try {
-    const result = await pool.query("SELECT id, email, name, role, created_at FROM ec_users ORDER BY created_at DESC");
-    res.json(result.rows);
+    const r = await pool.query(
+      "UPDATE ec_profiles SET verified=$1, updated_at=NOW() WHERE id=$2 RETURNING *",
+      [!!verified, req.params.id]
+    );
+    if (r.rows.length === 0) return res.status(404).json({ error: "Profile not found" });
+    res.json(r.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// User: get own account limits (for frontend photo/listing limit enforcement)
+router.get("/my-limits", requireAuth as any, async (req: AuthRequest, res) => {
+  try {
+    const userRow = await pool.query("SELECT role, account_type FROM ec_users WHERE id=$1", [req.user!.id]);
+    const { role, account_type } = userRow.rows[0] ?? { role: "user", account_type: "independent" };
+    let maxListings = 1, maxPhotos = 1;
+    if (role === "admin" || role === "supervisor") { maxListings = 999; maxPhotos = 10; }
+    else if (account_type === "agent") { maxListings = 3; maxPhotos = 3; }
+    // gallery boost is handled separately per profile
+    res.json({ role, account_type, maxListings, maxPhotos });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

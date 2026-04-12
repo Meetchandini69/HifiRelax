@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { MapPin, Phone, MessageCircle, Images } from "lucide-react";
+import { MapPin, Phone, MessageCircle, Images, BadgeCheck } from "lucide-react";
 
 interface Profile {
   id: number; title: string; name: string; description: string; age: number;
@@ -9,6 +9,7 @@ interface Profile {
   status: string; created_at: string;
   active_boost_slug?: string; active_badge_label?: string; active_badge_color?: string;
   gallery_boost_active?: boolean;
+  verified?: boolean;
 }
 
 export default function ProfileCard({ p }: { p: Profile }) {
@@ -100,7 +101,10 @@ export default function ProfileCard({ p }: { p: Profile }) {
 
       <div className="p-3">
         <Link href={href}>
-          <h2 className="font-semibold text-gray-900 text-sm leading-tight mb-1 hover:text-rose-600 line-clamp-1">{p.title}</h2>
+          <h2 className="font-semibold text-gray-900 text-sm leading-tight mb-1 hover:text-rose-600 line-clamp-1 flex items-center gap-1">
+            {p.title}
+            {p.verified && <BadgeCheck size={13} className="text-blue-500 flex-shrink-0" title="Verified listing" />}
+          </h2>
         </Link>
         <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
           <MapPin size={11} />

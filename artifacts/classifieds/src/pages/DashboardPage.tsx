@@ -181,7 +181,7 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-1.5 flex-shrink-0 items-center">
+                  <div className="flex gap-1.5 flex-shrink-0 items-center flex-wrap">
                     {p.status === "approved" && (
                       <>
                         <Link href={`/dashboard/boost/${p.id}`}
@@ -199,11 +199,14 @@ export default function DashboardPage() {
                         </a>
                       </>
                     )}
-                    {p.status === "pending" && (
-                      <Link href={`/dashboard/post?edit=${p.id}`} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                        <Eye size={15} />
-                      </Link>
-                    )}
+                    {/* Edit available for all statuses — re-submits for approval */}
+                    <Link
+                      href={`/dashboard/post?edit=${p.id}`}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title={p.status === "approved" ? "Edit (will re-submit for approval)" : "Edit listing"}
+                    >
+                      <Eye size={15} />
+                    </Link>
                     <button onClick={() => handleDelete(p.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                       <Trash2 size={15} />
                     </button>

@@ -1,9 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileText, MapPin, Settings, Zap, BookOpen } from "lucide-react";
+import { LayoutDashboard, FileText, MapPin, Settings, Zap, BookOpen, Users } from "lucide-react";
 
 const TABS = [
   { href: "/admin",                label: "Overview",     icon: LayoutDashboard },
   { href: "/admin/profiles",       label: "Listings",     icon: FileText },
+  { href: "/admin/users",          label: "Users",        icon: Users },
   { href: "/admin/locations",      label: "Locations",    icon: MapPin },
   { href: "/admin/boosts",         label: "Boosts",       icon: Zap },
   { href: "/admin/page-content",   label: "SEO Content",  icon: BookOpen },

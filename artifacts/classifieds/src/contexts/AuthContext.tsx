@@ -1,13 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { api } from "@/lib/api";
 
-interface User { id: number; email: string; name: string; role: string; }
+interface User { id: number; email: string; name: string; role: string; account_type?: string; }
 interface AuthCtx {
   user: User | null;
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string, account_type?: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -35,8 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
-  const register = async (email: string, password: string, name: string) => {
-    const data = await api.register({ email, password, name });
+  const register = async (email: string, password: string, name: string, account_type?: string) => {
+    const data = await api.register({ email, password, name, account_type });
     localStorage.setItem("ec_token", data.token);
     setToken(data.token);
     setUser(data.user);

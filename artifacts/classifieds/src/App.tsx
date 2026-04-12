@@ -19,6 +19,7 @@ import AdminLocationsPage from "@/pages/admin/AdminLocationsPage";
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage";
 import AdminBoostsPage from "@/pages/admin/AdminBoostsPage";
 import AdminPageContentPage from "@/pages/admin/AdminPageContentPage";
+import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import BoostPage from "@/pages/BoostPage";
 import UserSettingsPage from "@/pages/UserSettingsPage";
 import DisclaimerModal from "@/components/DisclaimerModal";
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/admin/settings" component={AdminSettingsPage} />
       <Route path="/admin/boosts" component={AdminBoostsPage} />
       <Route path="/admin/page-content" component={AdminPageContentPage} />
+      <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/dashboard/boost/:profileId" component={BoostPage} />
       <Route path="/dashboard/settings" component={UserSettingsPage} />
 

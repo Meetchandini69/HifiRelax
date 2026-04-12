@@ -32,11 +32,17 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Features**:
   - **SEO silo URLs**: `/:state_slug` → `/escorts/:city_slug` → `/escorts/:area_slug` → `/escorts/:area_slug/:profile_slug`
   - **User panel**: Register, login, post profile, dashboard, image cropper (3:4), boost ads
-  - **Admin panel**: Overview, Listings (approve/reject), Locations, Boosts, Settings
-  - **Ad Boost system**: 3 plans (Featured ₹299/7d, Premium ₹599/15d, VIP ₹999/30d); badges on cards (Zap/Crown/Gem icons); priority sort; user request flow + admin approve/reject; Manage Plans tab
+  - **Admin panel**: Overview, Listings (approve/reject/verify), Locations, Boosts, **Users**, Settings
+  - **Ad Boost system**: top_ad/featured tiers (1w/2w/1m pricing); ⭐ Trending badge; Gallery Boost addon; stacking by `boost_approved_at`; user request flow + admin approve/reject; Manage Plans tab
   - **Settings panel**: 5 tabs — Profile, SEO/URL Master, Header & Footer, Theme (8 colors via `--ec-primary` CSS var), Users
   - **Footer**: settings-driven with links, about text, copyright, contact
-- **DB tables**: `ec_users`, `ec_profiles`, `ec_locations`, `ec_settings`, `ec_boost_plans`, `ec_boost_requests`
+  - **Account types**: agent (3 listings, 3 photos) / independent (1 listing, 1 photo) chosen at registration
+  - **Math captcha** on registration form
+  - **Edit-after-approve**: any edit resets status to `pending` for re-approval
+  - **Verified badge**: blue ✓ badge on listing cards; admin can toggle via Verify button in Listings panel
+  - **Admin user management**: list, create, edit role/account_type/status, delete users at `/admin/users`
+  - **Role-based limits**: admin/supervisor=unlimited; agent=3 profiles max; independent=1 profile max; `/profiles/my-limits` endpoint
+- **DB tables**: `ec_users` (incl. `account_type`), `ec_profiles` (incl. `verified`), `ec_locations`, `ec_settings`, `ec_boost_plans`, `ec_boost_plan_tiers`, `ec_boost_requests`
 - **Admin login**: `admin@eliteescorts.in` / `Admin@1234`
 - **API base**: `/classifieds/api/` (proxied to port 8080)
 

@@ -66,7 +66,6 @@ export const api = {
   adminReject: (id: number, reason: string) =>
     request(`${API}/classifieds/profiles/admin/${id}/reject`, { method: "PUT", body: JSON.stringify({ reason }) }),
   adminDeleteProfile: (id: number) => request(`${API}/classifieds/profiles/admin/${id}`, { method: "DELETE" }),
-  adminGetUsers: () => request(`${API}/classifieds/profiles/admin/users`),
 
   // Settings (public)
   getPublicSettings: () => request(`${API}/classifieds/settings/public`),
@@ -82,8 +81,16 @@ export const api = {
   adminGetAllUsers: () => request(`${API}/classifieds/settings/users`),
   adminUpdateUserStatus: (id: number, status: string) =>
     request(`${API}/classifieds/settings/users/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
+  adminGetUsers: () => request(`${API}/classifieds/auth/admin/users`),
+  adminCreateUser: (body: object) =>
+    request(`${API}/classifieds/auth/admin/users`, { method: "POST", body: JSON.stringify(body) }),
+  adminUpdateUser: (id: number, body: object) =>
+    request(`${API}/classifieds/auth/admin/users/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   adminDeleteUser: (id: number) =>
-    request(`${API}/classifieds/settings/users/${id}`, { method: "DELETE" }),
+    request(`${API}/classifieds/auth/admin/users/${id}`, { method: "DELETE" }),
+  adminVerifyProfile: (id: number, verified: boolean) =>
+    request(`${API}/classifieds/profiles/admin/${id}/verify`, { method: "PUT", body: JSON.stringify({ verified }) }),
+  getMyLimits: () => request(`${API}/classifieds/profiles/my-limits`),
 
   // User account settings
   updateMe: (name: string) =>

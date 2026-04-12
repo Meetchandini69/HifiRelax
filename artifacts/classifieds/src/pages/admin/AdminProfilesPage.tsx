@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import AdminNav from "@/components/AdminNav";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, Trash2, Clock, ChevronLeft, ChevronRight, Eye, MapPin } from "lucide-react";
+import { CheckCircle, XCircle, Trash2, Clock, ChevronLeft, ChevronRight, Eye, MapPin, BadgeCheck } from "lucide-react";
 
 const STATUS_TABS = ["all", "pending", "approved", "rejected"];
 const statusColors: Record<string, string> = {
@@ -60,6 +60,14 @@ export default function AdminProfilesPage() {
       await api.adminReject(id, rejectReason);
       toast.success("Profile rejected");
       setRejectId(null); setRejectReason("");
+      load();
+    } catch (err: any) { toast.error(err.message); }
+  };
+
+  const handleVerify = async (id: number, verified: boolean) => {
+    try {
+      await api.adminVerifyProfile(id, verified);
+      toast.success(verified ? "Profile verified" : "Verification removed");
       load();
     } catch (err: any) { toast.error(err.message); }
   };
@@ -147,10 +155,22 @@ export default function AdminProfilesPage() {
                       </>
                     )}
                     {p.status === "approved" && (
-                      <button onClick={() => { setRejectId(p.id); }}
-                        className="flex items-center gap-1 text-xs bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
-                        <XCircle size={13} /> Reject
-                      </button>
+                      <>
+                        <button onClick={() => { setRejectId(p.id); }}
+                          className="flex items-center gap-1 text-xs bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors">
+                          <XCircle size={13} /> Reject
+                        </button>
+                        <button
+                          onClick={() => handleVerify(p.id, !p.verified)}
+                          title={p.verified ? "Remove verification" : "Mark as verified"}
+                          className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors border ${
+                            p.verified
+                              ? "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                              : "bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-700 border-gray-200"
+                          }`}>
+                          <BadgeCheck size={13} /> {p.verified ? "Verified" : "Verify"}
+                        </button>
+                      </>
                     )}
                     <button onClick={() => handleDelete(p.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                       <Trash2 size={15} />
