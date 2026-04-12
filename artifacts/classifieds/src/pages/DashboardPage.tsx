@@ -52,7 +52,7 @@ export default function DashboardPage() {
   const hasBoostedProfile = profiles.some(p =>
     p.boost_expires_at && new Date(p.boost_expires_at) > new Date()
   );
-  const atFreeLimit = activeListings.length >= 1 && !hasBoostedProfile;
+  const atFreeLimit = activeListings.length >= 1 && !hasBoostedProfile && !["supervisor", "admin"].includes(user?.role || "");
 
   if (authLoading) return null;
 
