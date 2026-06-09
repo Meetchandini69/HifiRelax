@@ -139,7 +139,7 @@ export default function HomePage() {
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4 leading-tight">
             Find Your Perfect<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-400">Companion</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-400">Matching Companion</span>
           </h1>
           <p className="text-gray-300 text-base sm:text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
             {settings.site_tagline || "Verified independent escort listings across Tamil Nadu — discreet, safe, and always up-to-date"}
