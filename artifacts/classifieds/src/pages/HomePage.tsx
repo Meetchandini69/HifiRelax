@@ -135,7 +135,7 @@ export default function HomePage() {
         </div>
         <div className="relative max-w-4xl mx-auto text-center py-20 px-4">
           <div className="inline-flex items-center gap-2 bg-rose-600/20 border border-rose-500/30 rounded-full px-4 py-1.5 text-xs font-semibold text-rose-300 mb-6">
-            <Star size={12} className="fill-current" /> Tamil Nadu's #1 Escort Classifieds
+            <Star size={12} className="fill-current" /> Tamil Nadu's #1 Escorts Classifieds
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4 leading-tight">
             Find Your Perfect<br />
