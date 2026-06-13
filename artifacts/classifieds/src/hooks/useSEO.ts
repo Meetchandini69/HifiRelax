@@ -21,6 +21,20 @@ function setCanonical(url: string) {
   el.href = url;
 }
 
+function setJsonLd(schema: string) {
+  const existing = document.querySelector('script[data-seo-schema]');
+  if (existing) existing.remove();
+  if (!schema?.trim()) return;
+  try {
+    JSON.parse(schema);
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-seo-schema", "1");
+    script.textContent = schema;
+    document.head.appendChild(script);
+  } catch (_) {}
+}
+
 interface SEOOptions {
   title: string;
   description?: string;
@@ -41,8 +55,9 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     : canonical;
 
   useEffect(() => {
-    const overrideTitle = seoKey ? settings[`seo_${seoKey}_title`] : "";
-    const overrideDesc  = seoKey ? settings[`seo_${seoKey}_desc`]  : "";
+    const overrideTitle  = seoKey ? settings[`seo_${seoKey}_title`]  : "";
+    const overrideDesc   = seoKey ? settings[`seo_${seoKey}_desc`]   : "";
+    const overrideSchema = seoKey ? settings[`seo_${seoKey}_schema`] : "";
 
     const finalTitle = overrideTitle || title;
     const finalDesc  = overrideDesc  || description || "";
@@ -62,6 +77,8 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     if (ogImage) setMeta("twitter:image", ogImage);
 
     if (resolvedCanonical) setCanonical(resolvedCanonical);
+
+    setJsonLd(overrideSchema);
 
     return () => { document.title = siteName; };
   }, [title, description, resolvedCanonical, seoKey, settings]);
