@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [photo, setPhoto] = useState(0);
-  const base = import.meta.env.BASE_URL.replace(/\/$/, ""); // only for canonical/JSON-LD
+
 
   useEffect(() => {
     if (profileSlug) {
@@ -30,8 +30,8 @@ export default function ProfilePage() {
     description: profile
       ? `${profile.name}, ${profile.age ? profile.age + " yrs, " : ""}independent escort in ${profile.area}, ${profile.city}, ${profile.state}. Services: ${profile.services?.slice(0, 5).join(", ")}. Contact directly.`
       : "",
-    canonical: profile
-      ? `${window.location.origin}${base}/escorts/${profile.area_slug}/${profile.slug}`
+    canonicalPath: profile
+      ? `/escorts/${profile.area_slug}/${profile.slug}`
       : undefined,
   });
 
@@ -172,12 +172,12 @@ export default function ProfilePage() {
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}${base}/` },
-            { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}${base}/escorts` },
-            ...(profile.state_slug ? [{ "@type": "ListItem", "position": 3, "name": profile.state, "item": `${window.location.origin}${base}/${profile.state_slug}` }] : []),
-            ...(profile.city_slug  ? [{ "@type": "ListItem", "position": 4, "name": profile.city,  "item": `${window.location.origin}${base}/escorts/${profile.city_slug}` }] : []),
-            ...(profile.area_slug  ? [{ "@type": "ListItem", "position": 5, "name": profile.area,  "item": `${window.location.origin}${base}/escorts/${profile.area_slug}` }] : []),
-            { "@type": "ListItem", "position": 6, "name": profile.title, "item": `${window.location.origin}${base}/escorts/${profile.area_slug}/${profile.slug}` },
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}/` },
+            { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}/escorts` },
+            ...(profile.state_slug ? [{ "@type": "ListItem", "position": 3, "name": profile.state, "item": `${window.location.origin}/${profile.state_slug}` }] : []),
+            ...(profile.city_slug  ? [{ "@type": "ListItem", "position": 4, "name": profile.city,  "item": `${window.location.origin}/escorts/${profile.city_slug}` }] : []),
+            ...(profile.area_slug  ? [{ "@type": "ListItem", "position": 5, "name": profile.area,  "item": `${window.location.origin}/escorts/${profile.area_slug}` }] : []),
+            { "@type": "ListItem", "position": 6, "name": profile.title, "item": `${window.location.origin}/escorts/${profile.area_slug}/${profile.slug}` },
           ]
         })}} />
       </div>
