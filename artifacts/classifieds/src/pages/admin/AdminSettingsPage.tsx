@@ -170,7 +170,7 @@ export default function AdminSettingsPage() {
     setSaving(true);
     try {
       const seoKeys: Record<string,string> = {};
-      Object.entries(seoData).forEach(([k,v]) => { if (k.startsWith("seo_")) seoKeys[k] = v; });
+      Object.entries(seoData).forEach(([k,v]) => { if (k.startsWith("seo_") || k === "site_url") seoKeys[k] = v; });
       await api.adminUpdateSettings(seoKeys);
       refreshSettings();
       toast.success("SEO settings saved");
@@ -228,8 +228,8 @@ export default function AdminSettingsPage() {
   if (authLoading) return null;
 
   // Group locations for SEO section
-  const states  = [...new Set(locations.map(l => ({ slug: l.state_slug, label: l.state })).filter(x => x.slug).map(JSON.stringify))].map(x => JSON.parse(x));
-  const cities  = [...new Set(locations.map(l => ({ slug: l.city_slug, label: l.city })).filter(x => x.slug).map(JSON.stringify))].map(x => JSON.parse(x));
+  const states  = [...new Set(locations.map(l => ({ slug: l.state_slug, label: l.state })).filter(x => x.slug).map(x => JSON.stringify(x)))].map(x => JSON.parse(x));
+  const cities  = [...new Set(locations.map(l => ({ slug: l.city_slug, label: l.city })).filter(x => x.slug).map(x => JSON.stringify(x)))].map(x => JSON.parse(x));
   const areas   = locations.map(l => ({ slug: l.area_slug, label: `${l.area} (${l.city})` })).filter(x => x.slug);
 
   const onSeoChange = (k: string, v: string) => setSeoData(prev => ({ ...prev, [k]: v }));
@@ -309,6 +309,24 @@ export default function AdminSettingsPage() {
               <div className="space-y-5">
                 <h2 className="font-bold text-gray-900 text-base">SEO / URL Master</h2>
                 <p className="text-sm text-gray-500">Set custom meta titles and descriptions for each page. Profile pages use auto-generated SEO from the user's profile data.</p>
+
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Canonical Base URL</p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+                    <Field label="Site URL" note="Your production domain (e.g. https://hiferelax.pages.dev). Used as the base for all canonical URLs. Leave blank to use the current browser origin.">
+                      <Input
+                        value={seoData["site_url"] ?? ""}
+                        onChange={(v: string) => onSeoChange("site_url", v)}
+                        placeholder="https://yourdomain.com"
+                      />
+                    </Field>
+                    {seoData["site_url"] && (
+                      <p className="text-xs text-blue-600">
+                        Example canonical: <code className="bg-white px-1 rounded">{seoData["site_url"].replace(/\/$/, "")}/escorts/chennai</code>
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 <div className="space-y-3">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Main Pages</p>
