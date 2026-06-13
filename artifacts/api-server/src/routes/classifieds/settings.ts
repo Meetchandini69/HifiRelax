@@ -35,7 +35,7 @@ router.get("/public", async (_req, res) => {
     const safe = [
       "site_name","site_tagline","header_logo_text","header_phone","header_announcement",
       "footer_about","footer_copyright","footer_links","footer_contact_email",
-      "theme_color","og_image_url","watermark_text",
+      "theme_color","og_image_url","watermark_text","gsc_meta",
     ];
     // Also expose all seo_* keys
     const out: Record<string, string> = {};
@@ -144,7 +144,7 @@ function getPublicDir(): string {
 // Admin: get SEO files content
 router.get("/seo-files", requireAdmin as any, async (_req, res) => {
   try {
-    const keys = ["sitemap_xml", "sitemap_html", "gsc_filename", "gsc_content"];
+    const keys = ["sitemap_xml", "sitemap_html", "gsc_filename", "gsc_content", "gsc_meta"];
     const r = await pool.query(
       `SELECT key, value FROM ec_settings WHERE key = ANY($1)`,
       [keys]
@@ -159,7 +159,7 @@ router.get("/seo-files", requireAdmin as any, async (_req, res) => {
 
 // Admin: save SEO files content — writes to DB + public folder
 router.post("/seo-files", requireAdmin as any, async (req, res) => {
-  const { sitemap_xml, sitemap_html, gsc_filename, gsc_content } = req.body as Record<string, string>;
+  const { sitemap_xml, sitemap_html, gsc_filename, gsc_content, gsc_meta } = req.body as Record<string, string>;
   try {
     const publicDir = getPublicDir();
     if (!existsSync(publicDir)) mkdirSync(publicDir, { recursive: true });
@@ -170,6 +170,7 @@ router.post("/seo-files", requireAdmin as any, async (req, res) => {
       ["sitemap_html", sitemap_html ?? ""],
       ["gsc_filename", gsc_filename ?? ""],
       ["gsc_content", gsc_content ?? ""],
+      ["gsc_meta", gsc_meta ?? ""],
     ];
     for (const [key, value] of entries) {
       await setSetting(key, value);
