@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 export interface SiteSettings {
   site_name: string;
   site_tagline: string;
+  site_url: string;
   header_logo_text: string;
   header_phone: string;
   header_announcement: string;
@@ -19,6 +20,7 @@ export interface SiteSettings {
 const defaults: SiteSettings = {
   site_name: "EliteEscorts",
   site_tagline: "Find Premium Escort Profiles",
+  site_url: "",
   header_logo_text: "EliteEscorts",
   header_phone: "",
   header_announcement: "",
@@ -63,7 +65,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const load = () => {
     api.getPublicSettings()
       .then((data: Partial<SiteSettings>) => {
-        setSettings(s => ({ ...s, ...data }));
+        setSettings(s => ({ ...s, ...data } as SiteSettings));
         if (data.theme_color) applyTheme(data.theme_color);
       })
       .catch(() => {})
