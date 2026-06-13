@@ -24,17 +24,23 @@ function setCanonical(url: string) {
 interface SEOOptions {
   title: string;
   description?: string;
-  canonical?: string;
-  seoKey?: string; // e.g. "home", "escorts", "state_tamilnadu", "city_coimbatore", "area_gandhipuram"
+  canonical?: string;      // full URL (backward compat)
+  canonicalPath?: string;  // path only — base taken from settings.site_url or window.location.origin
+  seoKey?: string;         // e.g. "home", "escorts", "state_tamilnadu", "city_coimbatore"
 }
 
-export function useSEO({ title, description, canonical, seoKey }: SEOOptions) {
+export function useSEO({ title, description, canonical, canonicalPath, seoKey }: SEOOptions) {
   const { settings } = useSettings();
   const siteName = settings.site_name || "EliteEscorts";
   const ogImage = settings.og_image_url || "";
 
+  // Build canonical: prefer canonicalPath (uses configured site_url), else fall back to explicit canonical
+  const canonicalBase = (settings.site_url || window.location.origin).replace(/\/$/, "");
+  const resolvedCanonical = canonicalPath != null
+    ? `${canonicalBase}${canonicalPath}`
+    : canonical;
+
   useEffect(() => {
-    // Check for admin-overridden title/desc from settings
     const overrideTitle = seoKey ? settings[`seo_${seoKey}_title`] : "";
     const overrideDesc  = seoKey ? settings[`seo_${seoKey}_desc`]  : "";
 
@@ -44,21 +50,19 @@ export function useSEO({ title, description, canonical, seoKey }: SEOOptions) {
     document.title = finalTitle ? `${finalTitle} | ${siteName}` : siteName;
     if (finalDesc) setMeta("description", finalDesc);
 
-    // OG tags
     setOgMeta("og:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
     setOgMeta("og:description", finalDesc);
     setOgMeta("og:type",        "website");
-    if (ogImage)    setOgMeta("og:image", ogImage);
-    if (canonical)  setOgMeta("og:url",   canonical);
+    if (ogImage)            setOgMeta("og:image", ogImage);
+    if (resolvedCanonical)  setOgMeta("og:url",   resolvedCanonical);
 
-    // Twitter card
     setMeta("twitter:card",        "summary_large_image");
     setMeta("twitter:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
     setMeta("twitter:description", finalDesc);
     if (ogImage) setMeta("twitter:image", ogImage);
 
-    if (canonical) setCanonical(canonical);
+    if (resolvedCanonical) setCanonical(resolvedCanonical);
 
     return () => { document.title = siteName; };
-  }, [title, description, canonical, seoKey, settings]);
+  }, [title, description, resolvedCanonical, seoKey, settings]);
 }
