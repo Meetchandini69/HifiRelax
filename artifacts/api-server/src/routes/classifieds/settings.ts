@@ -33,7 +33,7 @@ router.get("/public", async (_req, res) => {
     const settings = await getAllSettings();
     // Only expose safe keys
     const safe = [
-      "site_name","site_tagline","header_logo_text","header_phone","header_announcement",
+      "site_name","site_tagline","site_url","header_logo_text","header_phone","header_announcement",
       "footer_about","footer_copyright","footer_links","footer_contact_email",
       "theme_color","og_image_url","watermark_text","gsc_meta",
     ];
