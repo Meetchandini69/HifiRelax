@@ -19,7 +19,7 @@ export default function LocationPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [pageContent, setPageContent] = useState<any>(null);
-  const base = import.meta.env.BASE_URL.replace(/\/$/, ""); // only for canonical/JSON-LD
+
 
   useEffect(() => {
     if (!slug) return;
@@ -71,7 +71,7 @@ export default function LocationPage() {
         ? `Browse verified escort listings in ${cityData.city}, ${cityData.state}. Find escorts in ${cityData.areas?.map((a: any) => a.area).join(", ")}.`
         : `${total}+ verified escort profiles in ${cityData.area}, ${cityData.city}, ${cityData.state}. Call or WhatsApp directly.`
       : "",
-    canonical: cityData ? `${window.location.origin}${base}/escorts/${slug}` : undefined,
+    canonicalPath: cityData ? `/escorts/${slug}` : undefined,
     seoKey: slug ? (isCity ? `city_${cityData?.city_slug ?? slug}` : `area_${slug}`) : undefined,
   });
 
@@ -184,10 +184,10 @@ export default function LocationPage() {
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}${base}/` },
-            { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}${base}/escorts` },
-            { "@type": "ListItem", "position": 3, "name": cityData.state, "item": `${window.location.origin}${base}/${cityData.state_slug}` },
-            { "@type": "ListItem", "position": 4, "name": cityData.city, "item": `${window.location.origin}${base}/escorts/${slug}` },
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}/` },
+            { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}/escorts` },
+            { "@type": "ListItem", "position": 3, "name": cityData.state, "item": `${window.location.origin}/${cityData.state_slug}` },
+            { "@type": "ListItem", "position": 4, "name": cityData.city, "item": `${window.location.origin}/escorts/${slug}` },
           ]
         })}} />
       </div>
@@ -266,11 +266,11 @@ export default function LocationPage() {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}${base}/` },
-          { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}${base}/escorts` },
-          { "@type": "ListItem", "position": 3, "name": cityData.state, "item": `${window.location.origin}${base}/${cityData.state_slug}` },
-          { "@type": "ListItem", "position": 4, "name": cityData.city, "item": `${window.location.origin}${base}/escorts/${cityData.city_slug}` },
-          { "@type": "ListItem", "position": 5, "name": cityData.area, "item": `${window.location.origin}${base}/escorts/${slug}` },
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}/` },
+          { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}/escorts` },
+          { "@type": "ListItem", "position": 3, "name": cityData.state, "item": `${window.location.origin}/${cityData.state_slug}` },
+          { "@type": "ListItem", "position": 4, "name": cityData.city, "item": `${window.location.origin}/escorts/${cityData.city_slug}` },
+          { "@type": "ListItem", "position": 5, "name": cityData.area, "item": `${window.location.origin}/escorts/${slug}` },
         ]
       })}} />
     </div>
@@ -278,7 +278,7 @@ export default function LocationPage() {
       content_heading={pageContent?.content_heading}
       content_html={pageContent?.content_html}
       faq_json={pageContent?.faq_json}
-      locationName={cityData ? (locType === "city" ? cityData.city : cityData.area) : undefined}
+      locationName={cityData ? (locType !== "area" ? cityData.city : cityData.area) : undefined}
     />
     <Footer />
     </>
