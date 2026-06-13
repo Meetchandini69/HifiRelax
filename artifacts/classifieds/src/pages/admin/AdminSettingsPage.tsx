@@ -202,6 +202,7 @@ export default function AdminSettingsPage() {
     setSaving(true);
     try {
       await api.adminSaveSeoFiles(seoFiles);
+      refreshSettings();
       toast.success("SEO files saved and published");
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(false); }
