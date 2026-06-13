@@ -58,8 +58,9 @@ function SeoRow({ label, keyPrefix, data, onChange }: {
   data: Record<string,string>; onChange: (k: string, v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const titleKey = `seo_${keyPrefix}_title`;
-  const descKey  = `seo_${keyPrefix}_desc`;
+  const titleKey  = `seo_${keyPrefix}_title`;
+  const descKey   = `seo_${keyPrefix}_desc`;
+  const schemaKey = `seo_${keyPrefix}_schema`;
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
       <button onClick={() => setOpen(!open)}
@@ -77,6 +78,9 @@ function SeoRow({ label, keyPrefix, data, onChange }: {
           </Field>
           <Field label="Meta Description">
             <Textarea value={data[descKey] ?? ""} onChange={(v: string) => onChange(descKey, v)} placeholder="Brief description for search engines (150-160 chars)" rows={2} />
+          </Field>
+          <Field label="Schema Markup (JSON-LD)" note='Paste a JSON-LD object, e.g. {"@context":"https://schema.org","@type":"WebPage",...}. Injected as <script type="application/ld+json"> in the page head.'>
+            <Textarea value={data[schemaKey] ?? ""} onChange={(v: string) => onChange(schemaKey, v)} placeholder={'{\n  "@context": "https://schema.org",\n  "@type": "WebPage",\n  "name": "...",\n  "description": "..."\n}'} rows={5} />
           </Field>
         </div>
       )}
