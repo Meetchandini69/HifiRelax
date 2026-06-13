@@ -22,12 +22,12 @@ export default function ListingsPage() {
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedArea, setSelectedArea] = useState(areaSlug);
   const [pageContent, setPageContent] = useState<any>(null);
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 
   useSEO({
     title: "Browse All Escorts in Tamil Nadu",
     description: "Browse verified independent escort profiles across Tamil Nadu. Filter by city and area.",
-    canonical: `${window.location.origin}${base}/escorts`,
+    canonicalPath: "/escorts",
     seoKey: "escorts",
   });
 
