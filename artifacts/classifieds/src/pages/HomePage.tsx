@@ -104,13 +104,13 @@ export default function HomePage() {
   const [featured, setFeatured] = useState<any[]>([]);
   const [states, setStates] = useState<any[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 
   const { settings } = useSettings();
   useSEO({
     title: "Verified Escort Profiles in Tamil Nadu",
     description: "Browse verified independent escort listings across Tamil Nadu — Chennai, Coimbatore, and more. Discreet, safe, and always up-to-date.",
-    canonical: `${window.location.origin}${base}/`,
+    canonicalPath: "/",
     seoKey: "home",
   });
 
