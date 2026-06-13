@@ -14,7 +14,7 @@ export default function StatePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [pageContent, setPageContent] = useState<any>(null);
-  const base = import.meta.env.BASE_URL.replace(/\/$/, ""); // only for canonical/JSON-LD, NOT for <Link> hrefs
+
 
   useEffect(() => {
     if (!state_slug) return;
@@ -30,7 +30,7 @@ export default function StatePage() {
     description: data
       ? `Find verified escort listings across all cities in ${data.state}. Browse escorts in ${data.cities?.map((c: any) => c.city).join(", ")}.`
       : "",
-    canonical: data ? `${window.location.origin}${base}/${state_slug}` : undefined,
+    canonicalPath: data ? `/${state_slug}` : undefined,
     seoKey: state_slug ? `state_${state_slug}` : undefined,
   });
 
@@ -124,9 +124,9 @@ export default function StatePage() {
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}${base}/` },
-            { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}${base}/escorts` },
-            { "@type": "ListItem", "position": 3, "name": data.state, "item": `${window.location.origin}${base}/${state_slug}` },
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}/` },
+            { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}/escorts` },
+            { "@type": "ListItem", "position": 3, "name": data.state, "item": `${window.location.origin}/${state_slug}` },
           ]
         })}} />
       </div>
