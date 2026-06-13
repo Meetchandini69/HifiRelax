@@ -14,6 +14,7 @@ export interface SiteSettings {
   footer_contact_email: string;
   theme_color: string;
   og_image_url: string;
+  gsc_meta: string;
   [key: string]: string;
 }
 
@@ -30,6 +31,7 @@ const defaults: SiteSettings = {
   footer_contact_email: "",
   theme_color: "rose",
   og_image_url: "",
+  gsc_meta: "",
 };
 
 interface SettingsContextType {
@@ -58,6 +60,19 @@ function applyTheme(color: string) {
   document.documentElement.style.setProperty("--ec-primary", hex);
 }
 
+function injectGscMeta(rawTag: string) {
+  const existing = document.querySelector('meta[name="google-site-verification"]');
+  if (existing) existing.remove();
+  const content = rawTag.trim();
+  if (!content) return;
+  const match = content.match(/content="([^"]+)"/);
+  const token = match ? match[1] : content;
+  const meta = document.createElement("meta");
+  meta.name = "google-site-verification";
+  meta.content = token;
+  document.head.appendChild(meta);
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<SiteSettings>(defaults);
   const [loading, setLoading] = useState(true);
@@ -67,6 +82,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       .then((data: Partial<SiteSettings>) => {
         setSettings(s => ({ ...s, ...data } as SiteSettings));
         if (data.theme_color) applyTheme(data.theme_color);
+        if (data.gsc_meta) injectGscMeta(data.gsc_meta);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
