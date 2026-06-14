@@ -52,6 +52,14 @@ function SaveBtn({ loading, onClick }: { loading: boolean; onClick: () => void }
   );
 }
 
+const ROBOTS_OPTIONS = [
+  { value: "",                  label: "Default (index, follow)" },
+  { value: "index, follow",     label: "index, follow" },
+  { value: "noindex, follow",   label: "noindex, follow — hide from search engines" },
+  { value: "index, nofollow",   label: "index, nofollow — don't follow links" },
+  { value: "noindex, nofollow", label: "noindex, nofollow — hide page & don't follow links" },
+];
+
 // ─── SEO Row ─────────────────────────────────────────────────────────────────
 function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
   label: string; keyPrefix: string;
@@ -63,15 +71,23 @@ function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
   const descKey      = `seo_${keyPrefix}_desc`;
   const schemaKey    = `seo_${keyPrefix}_schema`;
   const canonicalKey = `seo_${keyPrefix}_canonical`;
+  const robotsKey    = `seo_${keyPrefix}_robots`;
+
+  const robotsValue = data[robotsKey] ?? "";
+  const isNoindex   = robotsValue.includes("noindex");
+
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
       <button onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 transition-colors">
-        <div>
-          <span className="text-sm font-semibold text-gray-900">{label}</span>
-          {data[titleKey] && <span className="ml-3 text-xs text-gray-400 truncate max-w-xs inline-block">{data[titleKey]}</span>}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-semibold text-gray-900 shrink-0">{label}</span>
+          {data[titleKey] && <span className="text-xs text-gray-400 truncate max-w-xs">{data[titleKey]}</span>}
+          {isNoindex && (
+            <span className="shrink-0 text-xs font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">noindex</span>
+          )}
         </div>
-        {open ? <ChevronUp size={15} className="text-gray-400" /> : <ChevronDown size={15} className="text-gray-400" />}
+        {open ? <ChevronUp size={15} className="text-gray-400 shrink-0" /> : <ChevronDown size={15} className="text-gray-400 shrink-0" />}
       </button>
       {open && (
         <div className="p-4 space-y-3 bg-white">
@@ -83,6 +99,20 @@ function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
           </Field>
           <Field label="Canonical URL" note="Override the canonical URL for this page. Leave blank to use the auto-generated URL based on the Site URL + page path.">
             <Input value={data[canonicalKey] ?? ""} onChange={(v: string) => onChange(canonicalKey, v)} placeholder={siteUrl ? `${siteUrl.replace(/\/$/, "")}/escorts/example` : "https://yourdomain.com/page-path"} />
+          </Field>
+          <Field label="Robots" note="Controls whether search engines index this page and follow its links. Use 'noindex' to hide a page from Google.">
+            <select
+              value={robotsValue}
+              onChange={e => onChange(robotsKey, e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white"
+            >
+              {ROBOTS_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            {isNoindex && (
+              <p className="mt-1 text-xs text-amber-600 font-medium">⚠ This page will be hidden from search engines.</p>
+            )}
           </Field>
           <Field label="Schema Markup (JSON-LD)" note='Paste a JSON-LD object, e.g. {"@context":"https://schema.org","@type":"WebPage",...}. Injected as <script type="application/ld+json"> in the page head.'>
             <Textarea value={data[schemaKey] ?? ""} onChange={(v: string) => onChange(schemaKey, v)} placeholder={'{\n  "@context": "https://schema.org",\n  "@type": "WebPage",\n  "name": "...",\n  "description": "..."\n}'} rows={5} />

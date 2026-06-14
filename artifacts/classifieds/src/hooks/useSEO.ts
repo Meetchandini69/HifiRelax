@@ -36,6 +36,16 @@ function setJsonLd(schema: string) {
   } catch (_) {}
 }
 
+function setRobots(value: string) {
+  let el = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+  if (!value) {
+    if (el) el.remove();
+    return;
+  }
+  if (!el) { el = document.createElement("meta"); el.name = "robots"; document.head.appendChild(el); }
+  el.content = value;
+}
+
 interface SEOOptions {
   title: string;
   description?: string;
@@ -64,6 +74,7 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     const overrideDesc      = seoKey ? settings[`seo_${seoKey}_desc`]      : "";
     const overrideSchema    = seoKey ? settings[`seo_${seoKey}_schema`]    : "";
     const overrideCanonical = seoKey ? settings[`seo_${seoKey}_canonical`] : "";
+    const overrideRobots    = seoKey ? settings[`seo_${seoKey}_robots`]    : "";
 
     const finalTitle     = overrideTitle || title;
     const finalDesc      = overrideDesc  || description || "";
@@ -84,9 +95,9 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     if (ogImage) setMeta("twitter:image", ogImage);
 
     setCanonical(finalCanonical);
-
+    setRobots(overrideRobots);
     setJsonLd(overrideSchema);
 
-    return () => { document.title = siteName; };
+    return () => { document.title = siteName; setRobots(""); };
   }, [title, description, resolvedCanonical, currentPath, seoKey, settings]);
 }
