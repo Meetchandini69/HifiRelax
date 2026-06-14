@@ -53,14 +53,16 @@ function SaveBtn({ loading, onClick }: { loading: boolean; onClick: () => void }
 }
 
 // ─── SEO Row ─────────────────────────────────────────────────────────────────
-function SeoRow({ label, keyPrefix, data, onChange }: {
+function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
   label: string; keyPrefix: string;
   data: Record<string,string>; onChange: (k: string, v: string) => void;
+  siteUrl?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const titleKey  = `seo_${keyPrefix}_title`;
-  const descKey   = `seo_${keyPrefix}_desc`;
-  const schemaKey = `seo_${keyPrefix}_schema`;
+  const titleKey     = `seo_${keyPrefix}_title`;
+  const descKey      = `seo_${keyPrefix}_desc`;
+  const schemaKey    = `seo_${keyPrefix}_schema`;
+  const canonicalKey = `seo_${keyPrefix}_canonical`;
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
       <button onClick={() => setOpen(!open)}
@@ -78,6 +80,9 @@ function SeoRow({ label, keyPrefix, data, onChange }: {
           </Field>
           <Field label="Meta Description">
             <Textarea value={data[descKey] ?? ""} onChange={(v: string) => onChange(descKey, v)} placeholder="Brief description for search engines (150-160 chars)" rows={2} />
+          </Field>
+          <Field label="Canonical URL" note="Override the canonical URL for this page. Leave blank to use the auto-generated URL based on the Site URL + page path.">
+            <Input value={data[canonicalKey] ?? ""} onChange={(v: string) => onChange(canonicalKey, v)} placeholder={siteUrl ? `${siteUrl.replace(/\/$/, "")}/escorts/example` : "https://yourdomain.com/page-path"} />
           </Field>
           <Field label="Schema Markup (JSON-LD)" note='Paste a JSON-LD object, e.g. {"@context":"https://schema.org","@type":"WebPage",...}. Injected as <script type="application/ld+json"> in the page head.'>
             <Textarea value={data[schemaKey] ?? ""} onChange={(v: string) => onChange(schemaKey, v)} placeholder={'{\n  "@context": "https://schema.org",\n  "@type": "WebPage",\n  "name": "...",\n  "description": "..."\n}'} rows={5} />
@@ -335,15 +340,15 @@ export default function AdminSettingsPage() {
 
                 <div className="space-y-3">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Main Pages</p>
-                  <SeoRow label="Home Page"      keyPrefix="home"    data={seoData} onChange={onSeoChange} />
-                  <SeoRow label="All Escorts"    keyPrefix="escorts" data={seoData} onChange={onSeoChange} />
+                  <SeoRow label="Home Page"      keyPrefix="home"    data={seoData} onChange={onSeoChange} siteUrl={seoData["site_url"]} />
+                  <SeoRow label="All Escorts"    keyPrefix="escorts" data={seoData} onChange={onSeoChange} siteUrl={seoData["site_url"]} />
                 </div>
 
                 {states.length > 0 && (
                   <div className="space-y-3">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">States</p>
                     {states.map((s: any) => (
-                      <SeoRow key={s.slug} label={`${s.label} (/${s.slug})`} keyPrefix={`state_${s.slug}`} data={seoData} onChange={onSeoChange} />
+                      <SeoRow key={s.slug} label={`${s.label} (/${s.slug})`} keyPrefix={`state_${s.slug}`} data={seoData} onChange={onSeoChange} siteUrl={seoData["site_url"]} />
                     ))}
                   </div>
                 )}
@@ -352,7 +357,7 @@ export default function AdminSettingsPage() {
                   <div className="space-y-3">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Cities</p>
                     {cities.map((c: any) => (
-                      <SeoRow key={c.slug} label={`${c.label} (/escorts/${c.slug})`} keyPrefix={`city_${c.slug}`} data={seoData} onChange={onSeoChange} />
+                      <SeoRow key={c.slug} label={`${c.label} (/escorts/${c.slug})`} keyPrefix={`city_${c.slug}`} data={seoData} onChange={onSeoChange} siteUrl={seoData["site_url"]} />
                     ))}
                   </div>
                 )}
@@ -361,7 +366,7 @@ export default function AdminSettingsPage() {
                   <div className="space-y-3">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Areas</p>
                     {areas.map((a: any) => (
-                      <SeoRow key={a.slug} label={`${a.label} (/escorts/${a.slug})`} keyPrefix={`area_${a.slug}`} data={seoData} onChange={onSeoChange} />
+                      <SeoRow key={a.slug} label={`${a.label} (/escorts/${a.slug})`} keyPrefix={`area_${a.slug}`} data={seoData} onChange={onSeoChange} siteUrl={seoData["site_url"]} />
                     ))}
                   </div>
                 )}

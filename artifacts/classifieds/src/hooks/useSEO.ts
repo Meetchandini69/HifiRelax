@@ -60,12 +60,14 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     : `${canonicalBase}${currentPath}`;
 
   useEffect(() => {
-    const overrideTitle  = seoKey ? settings[`seo_${seoKey}_title`]  : "";
-    const overrideDesc   = seoKey ? settings[`seo_${seoKey}_desc`]   : "";
-    const overrideSchema = seoKey ? settings[`seo_${seoKey}_schema`] : "";
+    const overrideTitle     = seoKey ? settings[`seo_${seoKey}_title`]     : "";
+    const overrideDesc      = seoKey ? settings[`seo_${seoKey}_desc`]      : "";
+    const overrideSchema    = seoKey ? settings[`seo_${seoKey}_schema`]    : "";
+    const overrideCanonical = seoKey ? settings[`seo_${seoKey}_canonical`] : "";
 
-    const finalTitle = overrideTitle || title;
-    const finalDesc  = overrideDesc  || description || "";
+    const finalTitle     = overrideTitle || title;
+    const finalDesc      = overrideDesc  || description || "";
+    const finalCanonical = overrideCanonical || resolvedCanonical;
 
     document.title = finalTitle ? `${finalTitle} | ${siteName}` : siteName;
     if (finalDesc) setMeta("description", finalDesc);
@@ -74,14 +76,14 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     setOgMeta("og:description", finalDesc);
     setOgMeta("og:type",        "website");
     if (ogImage)           setOgMeta("og:image", ogImage);
-    setOgMeta("og:url",    resolvedCanonical);
+    setOgMeta("og:url",    finalCanonical);
 
     setMeta("twitter:card",        "summary_large_image");
     setMeta("twitter:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
     setMeta("twitter:description", finalDesc);
     if (ogImage) setMeta("twitter:image", ogImage);
 
-    setCanonical(resolvedCanonical);
+    setCanonical(finalCanonical);
 
     setJsonLd(overrideSchema);
 
