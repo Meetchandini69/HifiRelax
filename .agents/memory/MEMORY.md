@@ -1,0 +1,1 @@
+- [Express 5 SSR catch-all](express5-ssr-catchall.md) — use `app.use()` not `app.get("/*splat")` for SPA HTML catch-all; splat pattern misses bare `/`

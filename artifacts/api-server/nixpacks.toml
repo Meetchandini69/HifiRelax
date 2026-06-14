@@ -8,7 +8,7 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "cd ../.. && pnpm --filter @workspace/api-server run build"
+  "cd ../.. && pnpm --filter @workspace/api-server run build && BASE_PATH=/ pnpm --filter @workspace/classifieds run build"
 ]
 
 [start]
