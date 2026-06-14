@@ -76,11 +76,23 @@ export function invalidateHtmlCache(): void {
 }
 
 // ─── Dist path resolution ─────────────────────────────────────────────────────
-// Supports running from: artifacts/api-server/ OR project root
+// Resolution strategy (most-to-least reliable):
+//
+//  1. Relative to __dirname (esbuild injects globalThis.__dirname as the
+//     directory of the *running bundle file*).
+//     - Replit dev:  <workspace>/artifacts/api-server/dist  → ../../classifieds/dist ✓
+//     - Railway:     /app/artifacts/api-server/dist         → ../../classifieds/dist ✓
+//
+//  2-4. process.cwd() fallbacks for edge cases (running ts-node, Jest, etc.)
 
 function getDistCandidates(file = ""): string[] {
   const suffix = file ? `/${file}` : "";
+  // __dirname is injected by esbuild banner (globalThis.__dirname)
+  const dir: string = (globalThis as Record<string, unknown>)["__dirname"] as string ?? "";
   return [
+    // Primary: relative to the bundle's own directory (always correct)
+    ...(dir ? [resolve(dir, `../../classifieds/dist${suffix}`)] : []),
+    // Fallbacks: relative to process.cwd()
     resolve(process.cwd(), `../classifieds/dist${suffix}`),
     resolve(process.cwd(), `artifacts/classifieds/dist${suffix}`),
     resolve(process.cwd(), `../../artifacts/classifieds/dist${suffix}`),
