@@ -1,0 +1,14 @@
+[phases.install]
+cmds = [
+  "npm install -g corepack@0.24.1 && corepack enable",
+  "pnpm i --frozen-lockfile"
+]
+
+[phases.build]
+cmds = [
+  "pnpm --filter @workspace/api-server run build",
+  "BASE_PATH=/ pnpm --filter @workspace/classifieds run build"
+]
+
+[start]
+cmd = "node --import=./artifacts/api-server/load-env.mjs ./artifacts/api-server/dist/index.mjs"
