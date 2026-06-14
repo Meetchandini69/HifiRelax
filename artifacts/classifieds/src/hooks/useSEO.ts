@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useLocation } from "wouter";
 import { useSettings } from "@/contexts/SettingsContext";
 
 function setMeta(name: string, content: string) {
@@ -45,14 +46,18 @@ interface SEOOptions {
 
 export function useSEO({ title, description, canonical, canonicalPath, seoKey }: SEOOptions) {
   const { settings } = useSettings();
+  const [currentPath] = useLocation();
   const siteName = settings.site_name || "EliteEscorts";
   const ogImage = settings.og_image_url || "";
 
-  // Build canonical: prefer canonicalPath (uses configured site_url), else fall back to explicit canonical
   const canonicalBase = (settings.site_url || window.location.origin).replace(/\/$/, "");
+
+  // Priority: explicit canonicalPath prop → explicit canonical URL → current wouter path (always correct)
   const resolvedCanonical = canonicalPath != null
     ? `${canonicalBase}${canonicalPath}`
-    : canonical;
+    : canonical != null
+    ? canonical
+    : `${canonicalBase}${currentPath}`;
 
   useEffect(() => {
     const overrideTitle  = seoKey ? settings[`seo_${seoKey}_title`]  : "";
@@ -68,18 +73,18 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     setOgMeta("og:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
     setOgMeta("og:description", finalDesc);
     setOgMeta("og:type",        "website");
-    if (ogImage)            setOgMeta("og:image", ogImage);
-    if (resolvedCanonical)  setOgMeta("og:url",   resolvedCanonical);
+    if (ogImage)           setOgMeta("og:image", ogImage);
+    setOgMeta("og:url",    resolvedCanonical);
 
     setMeta("twitter:card",        "summary_large_image");
     setMeta("twitter:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
     setMeta("twitter:description", finalDesc);
     if (ogImage) setMeta("twitter:image", ogImage);
 
-    if (resolvedCanonical) setCanonical(resolvedCanonical);
+    setCanonical(resolvedCanonical);
 
     setJsonLd(overrideSchema);
 
     return () => { document.title = siteName; };
-  }, [title, description, resolvedCanonical, seoKey, settings]);
+  }, [title, description, resolvedCanonical, currentPath, seoKey, settings]);
 }
