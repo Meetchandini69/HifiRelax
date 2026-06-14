@@ -67,11 +67,12 @@ function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
   siteUrl?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const titleKey     = `seo_${keyPrefix}_title`;
-  const descKey      = `seo_${keyPrefix}_desc`;
-  const schemaKey    = `seo_${keyPrefix}_schema`;
+  const titleKey    = `seo_${keyPrefix}_title`;
+  const descKey     = `seo_${keyPrefix}_desc`;
+  const schemaKey   = `seo_${keyPrefix}_schema`;
   const canonicalKey = `seo_${keyPrefix}_canonical`;
-  const robotsKey    = `seo_${keyPrefix}_robots`;
+  const robotsKey   = `seo_${keyPrefix}_robots`;
+  const ogImageKey  = `seo_${keyPrefix}_og_image`;
 
   const robotsValue = data[robotsKey] ?? "";
   const isNoindex   = robotsValue.includes("noindex");
@@ -99,6 +100,20 @@ function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
           </Field>
           <Field label="Canonical URL" note="Override the canonical URL for this page. Leave blank to use the auto-generated URL based on the Site URL + page path.">
             <Input value={data[canonicalKey] ?? ""} onChange={(v: string) => onChange(canonicalKey, v)} placeholder={siteUrl ? `${siteUrl.replace(/\/$/, "")}/escorts/example` : "https://yourdomain.com/page-path"} />
+          </Field>
+          <Field label="Social Share Image (OG Image)" note="Custom image shown when this page is shared on WhatsApp, Twitter, Facebook, etc. Paste a full image URL. Leave blank to use the global OG image.">
+            <Input value={data[ogImageKey] ?? ""} onChange={(v: string) => onChange(ogImageKey, v)} placeholder="https://yourdomain.com/images/og-chennai.jpg" />
+            {data[ogImageKey] && (
+              <div className="mt-2 flex items-center gap-3">
+                <img
+                  src={data[ogImageKey]}
+                  alt="OG preview"
+                  className="h-14 w-24 object-cover rounded-lg border border-gray-200 bg-gray-100"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+                <p className="text-xs text-gray-400">Preview of the social share image</p>
+              </div>
+            )}
           </Field>
           <Field label="Robots" note="Controls whether search engines index this page and follow its links. Use 'noindex' to hide a page from Google.">
             <select

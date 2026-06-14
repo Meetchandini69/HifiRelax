@@ -75,10 +75,12 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     const overrideSchema    = seoKey ? settings[`seo_${seoKey}_schema`]    : "";
     const overrideCanonical = seoKey ? settings[`seo_${seoKey}_canonical`] : "";
     const overrideRobots    = seoKey ? settings[`seo_${seoKey}_robots`]    : "";
+    const overrideOgImage   = seoKey ? settings[`seo_${seoKey}_og_image`]  : "";
 
     const finalTitle     = overrideTitle || title;
     const finalDesc      = overrideDesc  || description || "";
     const finalCanonical = overrideCanonical || resolvedCanonical;
+    const finalOgImage   = overrideOgImage || ogImage;
 
     document.title = finalTitle ? `${finalTitle} | ${siteName}` : siteName;
     if (finalDesc) setMeta("description", finalDesc);
@@ -86,13 +88,13 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     setOgMeta("og:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
     setOgMeta("og:description", finalDesc);
     setOgMeta("og:type",        "website");
-    if (ogImage)           setOgMeta("og:image", ogImage);
+    if (finalOgImage) setOgMeta("og:image", finalOgImage);
     setOgMeta("og:url",    finalCanonical);
 
     setMeta("twitter:card",        "summary_large_image");
     setMeta("twitter:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
     setMeta("twitter:description", finalDesc);
-    if (ogImage) setMeta("twitter:image", ogImage);
+    if (finalOgImage) setMeta("twitter:image", finalOgImage);
 
     setCanonical(finalCanonical);
     setRobots(overrideRobots);
