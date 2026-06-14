@@ -193,6 +193,7 @@ export default function AdminSettingsPage() {
         og_image_url:        data.og_image_url        ?? settings.og_image_url,
         site_name:           data.site_name           ?? settings.site_name,
         site_tagline:        data.site_tagline        ?? settings.site_tagline,
+        watermark_text:      data.watermark_text      ?? settings.watermark_text,
       });
       setThemeColor(data.theme_color ?? "rose");
     }).catch(() => {});
