@@ -166,6 +166,8 @@ export default function AdminSettingsPage() {
 
   // SEO Files tab state
   const [seoFiles, setSeoFiles] = useState({ sitemap_xml: "", sitemap_html: "", gsc_filename: "", gsc_content: "", gsc_meta: "" });
+  const [generating, setGenerating] = useState(false);
+  const [sitemapStats, setSitemapStats] = useState<{ states: number; cities: number; areas: number; profiles: number; total: number } | null>(null);
 
   // Users tab state
   const [users, setUsers] = useState<any[]>([]);
@@ -260,6 +262,18 @@ export default function AdminSettingsPage() {
       toast.success("SEO files saved and published");
     } catch (err: any) { toast.error(err.message); }
     finally { setSaving(false); }
+  };
+
+  const generateSitemap = async () => {
+    setGenerating(true);
+    setSitemapStats(null);
+    try {
+      const result: any = await api.adminGenerateSitemap();
+      setSeoFiles(f => ({ ...f, sitemap_xml: result.sitemap_xml, sitemap_html: result.sitemap_html }));
+      setSitemapStats(result.stats);
+      toast.success(`Sitemap generated — ${result.stats.total} URLs`);
+    } catch (err: any) { toast.error(err.message); }
+    finally { setGenerating(false); }
   };
 
   const toggleUserStatus = async (u: any) => {
@@ -432,6 +446,40 @@ export default function AdminSettingsPage() {
                   </p>
                 </div>
 
+                {/* Generate sitemap CTA */}
+                <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 rounded-xl p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Auto-generate from live data</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Builds both XML and HTML sitemaps from all your active locations and approved profile listings.</p>
+                    </div>
+                    <button
+                      onClick={generateSitemap}
+                      disabled={generating}
+                      className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shrink-0"
+                    >
+                      {generating
+                        ? <><Loader2 size={14} className="animate-spin" /> Generating…</>
+                        : <><Globe size={14} /> Generate Sitemap</>}
+                    </button>
+                  </div>
+                  {sitemapStats && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {[
+                        { label: "States",   count: sitemapStats.states },
+                        { label: "Cities",   count: sitemapStats.cities },
+                        { label: "Areas",    count: sitemapStats.areas },
+                        { label: "Profiles", count: sitemapStats.profiles },
+                        { label: "Total URLs", count: sitemapStats.total, highlight: true },
+                      ].map(({ label, count, highlight }) => (
+                        <span key={label} className={`text-xs font-medium px-2.5 py-1 rounded-full border ${highlight ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-white text-gray-600 border-gray-200"}`}>
+                          {count} {label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* sitemap.xml */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sitemap XML</p>
@@ -440,7 +488,7 @@ export default function AdminSettingsPage() {
                       <label className="text-sm font-medium text-gray-700">sitemap.xml content</label>
                       <span className="text-xs text-gray-400 bg-white border border-gray-200 rounded px-2 py-0.5 font-mono">served at /sitemap.xml</span>
                     </div>
-                    <p className="text-xs text-gray-400">Paste your full XML sitemap. Generate one from Google Search Console or tools like screaming frog.</p>
+                    <p className="text-xs text-gray-400">Auto-generated above, or paste your own. Saved and served at <code>/sitemap.xml</code> on your domain.</p>
                     <textarea
                       rows={8}
                       value={seoFiles.sitemap_xml}
@@ -459,7 +507,7 @@ export default function AdminSettingsPage() {
                       <label className="text-sm font-medium text-gray-700">sitemap.html content</label>
                       <span className="text-xs text-gray-400 bg-white border border-gray-200 rounded px-2 py-0.5 font-mono">served at /sitemap.html</span>
                     </div>
-                    <p className="text-xs text-gray-400">An HTML version of your sitemap for human-readable browsing. Optional.</p>
+                    <p className="text-xs text-gray-400">Auto-generated above, or paste your own. Human-readable version of your sitemap.</p>
                     <textarea
                       rows={6}
                       value={seoFiles.sitemap_html}

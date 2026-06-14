@@ -80,6 +80,7 @@ export const api = {
   adminGetSeoFiles: () => request(`${API}/classifieds/settings/seo-files`),
   adminSaveSeoFiles: (body: object) =>
     request(`${API}/classifieds/settings/seo-files`, { method: "POST", body: JSON.stringify(body) }),
+  adminGenerateSitemap: () => request(`${API}/classifieds/settings/generate-sitemap`),
 
   // Users (admin)
   adminGetAllUsers: () => request(`${API}/classifieds/settings/users`),

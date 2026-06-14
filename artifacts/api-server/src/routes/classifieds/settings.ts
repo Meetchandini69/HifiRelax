@@ -205,4 +205,81 @@ router.post("/seo-files", requireAdmin as any, async (req, res) => {
   }
 });
 
+// Admin: generate sitemap XML + HTML from live DB data
+router.get("/generate-sitemap", requireAdmin as any, async (_req, res) => {
+  try {
+    const siteUrl = (await getSetting("site_url")).replace(/\/$/, "") || "https://yourdomain.com";
+
+    // Fetch all locations
+    const locsResult = await pool.query(
+      `SELECT DISTINCT state, city, area, state_slug, city_slug, area_slug FROM ec_locations WHERE state_slug IS NOT NULL ORDER BY state, city, area`
+    );
+    const locations: any[] = locsResult.rows;
+
+    // Fetch all approved profiles
+    const profsResult = await pool.query(
+      `SELECT p.slug, l.area_slug FROM ec_profiles p
+       LEFT JOIN ec_locations l ON p.location_id = l.id
+       WHERE p.status = 'approved' AND p.slug IS NOT NULL AND l.area_slug IS NOT NULL`
+    );
+    const profiles: any[] = profsResult.rows;
+
+    // Deduplicate state/city slugs
+    const states  = [...new Map(locations.map(l => [l.state_slug,  l])).values()];
+    const cities  = [...new Map(locations.map(l => [l.city_slug,   l])).values()];
+    const areas   = [...new Map(locations.map(l => [l.area_slug,   l])).values()];
+
+    const today = new Date().toISOString().split("T")[0];
+
+    // Build URL entries array: [url, priority, changefreq]
+    const urlEntries: [string, string, string][] = [
+      [`${siteUrl}/`, "1.0", "daily"],
+      ...states.map(s  => [`${siteUrl}/${s.state_slug}`,          "0.9", "weekly"] as [string, string, string]),
+      ...cities.map(c  => [`${siteUrl}/escorts/${c.city_slug}`,   "0.8", "weekly"] as [string, string, string]),
+      ...areas.map(a   => [`${siteUrl}/escorts/${a.area_slug}`,   "0.7", "weekly"] as [string, string, string]),
+      ...profiles.map(p => [`${siteUrl}/escorts/${p.area_slug}/${p.slug}`, "0.6", "monthly"] as [string, string, string]),
+    ];
+
+    // XML sitemap
+    const xmlUrls = urlEntries.map(([url, priority, changefreq]) =>
+      `  <url>\n    <loc>${url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
+    ).join("\n");
+    const sitemap_xml =
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      `${xmlUrls}\n` +
+      `</urlset>`;
+
+    // HTML sitemap
+    const stateLinks  = states.map(s  => `      <li><a href="${siteUrl}/${s.state_slug}">${s.state}</a></li>`).join("\n");
+    const cityLinks   = cities.map(c  => `      <li><a href="${siteUrl}/escorts/${c.city_slug}">${c.city}</a></li>`).join("\n");
+    const areaLinks   = areas.map(a   => `      <li><a href="${siteUrl}/escorts/${a.area_slug}">${a.area} (${a.city})</a></li>`).join("\n");
+    const profileLinks = profiles.map(p => `      <li><a href="${siteUrl}/escorts/${p.area_slug}/${p.slug}">${p.slug}</a></li>`).join("\n");
+
+    const sitemap_html =
+      `<!DOCTYPE html>\n<html lang="en">\n<head><meta charset="UTF-8"><title>Sitemap</title></head>\n<body>\n` +
+      `<h1>Sitemap — ${siteUrl}</h1>\n` +
+      `<h2>Home</h2>\n<ul>\n      <li><a href="${siteUrl}/">Home</a></li>\n</ul>\n` +
+      (states.length  ? `<h2>States (${states.length})</h2>\n<ul>\n${stateLinks}\n</ul>\n`    : "") +
+      (cities.length  ? `<h2>Cities (${cities.length})</h2>\n<ul>\n${cityLinks}\n</ul>\n`    : "") +
+      (areas.length   ? `<h2>Areas (${areas.length})</h2>\n<ul>\n${areaLinks}\n</ul>\n`      : "") +
+      (profiles.length ? `<h2>Profiles (${profiles.length})</h2>\n<ul>\n${profileLinks}\n</ul>\n` : "") +
+      `</body>\n</html>`;
+
+    res.json({
+      sitemap_xml,
+      sitemap_html,
+      stats: {
+        states:   states.length,
+        cities:   cities.length,
+        areas:    areas.length,
+        profiles: profiles.length,
+        total:    urlEntries.length,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export { router as settingsRouter };
