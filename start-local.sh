@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# EliteEscorts — Start Local Development Servers
+# EliteEscorts — Start Local SSR Preview
 # Usage: bash start-local.sh
 # ============================================================
 
@@ -10,35 +10,20 @@ if [ -f .env ]; then
 fi
 
 echo ""
-echo "Starting EliteEscorts local dev servers..."
+echo "Starting EliteEscorts local SSR preview..."
 echo "  API Server  → http://localhost:8080"
-echo "  Frontend    → http://localhost:3000"
 echo ""
-echo "Press Ctrl+C to stop all servers."
+echo "Press Ctrl+C to stop the server."
 echo ""
 
-# Start API server in background
-(
-  cd artifacts/api-server
-  [ -f .env ] && export $(grep -v '^#' .env | xargs)
-  export PORT=8080
-  pnpm run dev
-) &
-API_PID=$!
-
-# Wait for API server to start
-sleep 4
-
-# Start frontend dev server
+# Build frontend so the API server can inject route-specific metadata
 (
   cd artifacts/classifieds
-  [ -f .env.local ] && export $(grep -v '^#' .env.local | xargs)
-  export PORT=3000
-  npx vite --config vite.config.local.ts --host
-) &
-FRONTEND_PID=$!
+  pnpm run build
+)
 
-# Trap Ctrl+C and kill both
-trap "kill $API_PID $FRONTEND_PID 2>/dev/null; echo 'Stopped.'; exit 0" SIGINT SIGTERM
-
-wait
+# Start API server and serve the built frontend with SSR metadata
+cd artifacts/api-server
+[ -f .env ] && export $(grep -v '^#' .env | xargs)
+export PORT=8080
+pnpm run dev

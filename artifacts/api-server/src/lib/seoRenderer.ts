@@ -25,6 +25,7 @@ interface MetaTags {
   canonical: string;
   ogImage: string;
   robots: string;
+  siteName: string;
 }
 
 // ─── Settings cache (1 min TTL) ───────────────────────────────────────────────
@@ -153,6 +154,7 @@ function injectMetaTags(html: string, m: MetaTags): string {
   out = out.replace(/<meta\s+property="og:title"[^>]*>/i,       `<meta property="og:title" content="${t}" />`);
   out = out.replace(/<meta\s+property="og:description"[^>]*>/i,  `<meta property="og:description" content="${d}" />`);
   out = out.replace(/<meta\s+property="og:url"[^>]*>/i,          `<meta property="og:url" content="${c}" />`);
+  out = out.replace(/<meta\s+property="og:site_name"[^>]*>/i,    `<meta property="og:site_name" content="${escHtml(m.siteName)}" />`);
   if (img) {
     out = out.replace(/<meta\s+property="og:image"[^>]*>/i,      `<meta property="og:image" content="${img}" />`);
   }
@@ -195,7 +197,7 @@ async function resolveMetaForPath(
     (key ? ovDesc(key) : "") || base;
 
   const meta = (title: string, description: string): MetaTags => ({
-    title, description, canonical, ogImage, robots,
+    title, description, canonical, ogImage, robots, siteName,
   });
 
   // ── / (Home) ────────────────────────────────────────────────────────────

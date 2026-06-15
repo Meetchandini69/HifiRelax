@@ -43,7 +43,7 @@ nano .env
 bash start-local.sh
 ```
 
-Open: http://localhost:3000
+Open: http://localhost:8080
 
 ### Option B — Without Docker
 
