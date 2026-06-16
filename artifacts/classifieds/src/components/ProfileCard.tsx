@@ -32,7 +32,7 @@ export default function ProfileCard({ p }: { p: Profile }) {
             <img
               src={currentPhoto}
               alt={p.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
+              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-400"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-50 to-pink-100">
