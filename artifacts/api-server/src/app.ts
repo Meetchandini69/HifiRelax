@@ -40,20 +40,32 @@ app.get("/health", (_req, res) => {
 
 app.use("/api", router);
 
-// DEBUG ROUTE
-app.get("/debug-public", (_req, res) => {
-  const fs = require("fs");
+import { pool } from "@workspace/db";
 
-  res.json({
-    cwd: process.cwd(),
-    publicDir: resolve(process.cwd(), "../classifieds/public"),
-    sitemapExists: fs.existsSync(
-      resolve(process.cwd(), "../classifieds/public/sitemap.xml")
-    ),
-    htmlExists: fs.existsSync(
-      resolve(process.cwd(), "../classifieds/public/sitemap.html")
-    ),
-  });
+app.get("/sitemap.xml", async (_req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT value FROM ec_settings WHERE key = 'sitemap_xml'"
+    );
+
+    res.type("application/xml");
+    res.send(result.rows[0]?.value || "");
+  } catch (err) {
+    res.status(500).send("Failed to load sitemap");
+  }
+});
+
+app.get("/sitemap.html", async (_req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT value FROM ec_settings WHERE key = 'sitemap_html'"
+    );
+
+    res.type("text/html");
+    res.send(result.rows[0]?.value || "");
+  } catch (err) {
+    res.status(500).send("Failed to load sitemap");
+  }
 });
 
 // ─── Serve SEO files (sitemap, GSC verification) from classifieds/public ──────
