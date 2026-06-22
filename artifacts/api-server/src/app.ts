@@ -40,6 +40,22 @@ app.get("/health", (_req, res) => {
 
 app.use("/api", router);
 
+// DEBUG ROUTE
+app.get("/debug-public", (_req, res) => {
+  const fs = require("fs");
+
+  res.json({
+    cwd: process.cwd(),
+    publicDir: resolve(process.cwd(), "../classifieds/public"),
+    sitemapExists: fs.existsSync(
+      resolve(process.cwd(), "../classifieds/public/sitemap.xml")
+    ),
+    htmlExists: fs.existsSync(
+      resolve(process.cwd(), "../classifieds/public/sitemap.html")
+    ),
+  });
+});
+
 // ─── Serve SEO files (sitemap, GSC verification) from classifieds/public ──────
 const publicDir = resolve(process.cwd(), "../classifieds/public");
 app.use(express.static(publicDir, {
