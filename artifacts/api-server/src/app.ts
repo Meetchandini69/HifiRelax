@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import { resolve } from "path";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { distExists, getDistDir, renderWithMeta } from "./lib/seoRenderer.js";
@@ -38,6 +39,17 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api", router);
+
+// ─── Serve SEO files (sitemap, GSC verification) from classifieds/public ──────
+const publicDir = resolve(process.cwd(), "../classifieds/public");
+app.use(express.static(publicDir, {
+  setHeaders(res, filePath) {
+    // Cache sitemaps for 1 hour
+    if (/\.(xml|html)$/i.test(filePath)) {
+      res.setHeader("Cache-Control", "public, max-age=3600");
+    }
+  },
+}));
 
 // ─── Serve built frontend with SSR metadata (production only) ─────────────────
 //

@@ -264,6 +264,7 @@ export default function PostProfilePage() {
               {[
                 { key: "phone", label: "Phone", placeholder: "+91 98765 43210" },
                 { key: "whatsapp", label: "WhatsApp", placeholder: "+91 98765 43210" },
+                { key: "whatsappMessage", label: "WhatsApp Message", placeholder: "Hello, I found your profile..." },
                 { key: "telegram", label: "Telegram", placeholder: "@username" },
               ].map(({ key, label, placeholder }) => (
                 <div key={key}>

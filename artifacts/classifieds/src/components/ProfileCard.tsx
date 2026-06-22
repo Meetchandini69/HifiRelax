@@ -130,7 +130,9 @@ export default function ProfileCard({ p }: { p: Profile }) {
             </a>
           )}
           {p.whatsapp && (
-            <a href={`https://wa.me/${p.whatsapp.replace(/[^0-9]/g, "")}`}
+            <a href={`https://wa.me/${p.whatsapp.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+  `Hello ${p.name}, I found your profile on your website and would like more details.`
+)}`}
               target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
               className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors">
               <MessageCircle size={11} /> WhatsApp

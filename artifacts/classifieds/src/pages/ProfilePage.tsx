@@ -150,7 +150,9 @@ export default function ProfilePage() {
                 </a>
               )}
               {profile.whatsapp && (
-                <a href={`https://wa.me/${profile.whatsapp.replace(/[^0-9]/g, "")}`}
+                <a href={`https://wa.me/${profile.whatsapp.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+  `Hello ${profile.name}, I found your profile on your website VNQ and would like more details.`
+)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2.5 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-xl transition-colors text-sm">
                   <MessageCircle size={18} /> WhatsApp Now
