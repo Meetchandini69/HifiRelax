@@ -53,11 +53,13 @@ const SERVICE_OPTIONS = [
 
 export default function PostProfilePage() {
   const { user, loading: authLoading } = useAuth();
-  const { settings } = useSettings();
-  const [loc, nav] = useLocation();
-  const qs = new URLSearchParams(loc.split("?")[1] || "");
-  const editId = qs.get("edit") ? parseInt(qs.get("edit")!) : null;
+const { settings } = useSettings();
+const [loc, nav] = useLocation();
 
+const params = new URLSearchParams(window.location.search);
+const editId = params.get("edit")
+  ? Number(params.get("edit"))
+  : null;
   const [locations, setLocations] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -86,9 +88,15 @@ export default function PostProfilePage() {
   }, []);
 
   useEffect(() => {
-    api.getLocations().then(setLocations).catch(() => {});
-    if (editId) {
-      api.getMyProfileById(editId).then((p: any) => {
+  api.getLocations().then(setLocations).catch(() => {});
+
+  if (editId) {
+    console.log("Loading profile", editId);
+
+    api.getMyProfileById(editId)
+      .then((p: any) => {
+        console.log("PROFILE DATA", p);
+
         setForm({
           title: p.title ?? "",
           name: p.name ?? "",
@@ -99,13 +107,18 @@ export default function PostProfilePage() {
           telegram: p.telegram ?? "",
           location_id: p.location_id?.toString() ?? "",
         });
+
         setPhotos(Array.isArray(p.photos) ? p.photos : []);
         setSelectedServices(Array.isArray(p.services) ? p.services : []);
         setGalleryBoostActive(p.gallery_boost_active || false);
         setEditingApproved(p.status === "approved");
-      }).catch(() => toast.error("Could not load listing data"));
-    }
-  }, [editId]);
+      })
+      .catch((err) => {
+        console.error("PROFILE LOAD ERROR", err);
+        toast.error("Could not load listing data");
+      });
+  }
+}, [editId]);
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
