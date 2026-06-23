@@ -67,8 +67,8 @@ function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
   siteUrl?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const titleKey    = `seo_${keyPrefix}_title`;
-  const descKey     = `seo_${keyPrefix}_desc`;
+const titleKey = "seo_area_title_template";
+const descKey = "seo_area_desc_template";
   const schemaKey   = `seo_${keyPrefix}_schema`;
   const canonicalKey = `seo_${keyPrefix}_canonical`;
   const robotsKey   = `seo_${keyPrefix}_robots`;
@@ -92,12 +92,40 @@ function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
       </button>
       {open && (
         <div className="p-4 space-y-3 bg-white">
-          <Field label="Meta Title">
-            <Input value={data[titleKey] ?? ""} onChange={(v: string) => onChange(titleKey, v)} placeholder={`${label} – EliteEscorts`} />
-          </Field>
-          <Field label="Meta Description">
-            <Textarea value={data[descKey] ?? ""} onChange={(v: string) => onChange(descKey, v)} placeholder="Brief description for search engines (150-160 chars)" rows={2} />
-          </Field>
+<Field label="Area Meta Title Template">
+  <Input
+    value={
+      data.seo_area_title_template ??
+      "{count}+ Verified Independent Escorts in {area} | {site_name}"
+    }
+    onChange={(v: string) =>
+      onChange("seo_area_title_template", v)
+    }
+  />
+</Field>
+
+<Field label="Area Meta Description Template">
+  <Textarea
+    value={
+      data.seo_area_desc_template ??
+      "Explore {count}+ verified independent escorts in {area}, {city}. Browse high-profile companion listings with photos, direct contact details and updated profiles."
+    }
+    onChange={(v: string) =>
+      onChange("seo_area_desc_template", v)
+    }
+    rows={3}
+  />
+</Field>
+
+<Field label="Default SEO Count">
+  <Input
+    value={data.seo_default_count ?? "50"}
+    onChange={(v: string) =>
+      onChange("seo_default_count", v)
+    }
+    placeholder="50"
+  />
+</Field>
           <Field label="Canonical URL" note="Override the canonical URL for this page. Leave blank to use the auto-generated URL based on the Site URL + page path.">
             <Input value={data[canonicalKey] ?? ""} onChange={(v: string) => onChange(canonicalKey, v)} placeholder={siteUrl ? `${siteUrl.replace(/\/$/, "")}/escorts/example` : "https://yourdomain.com/page-path"} />
           </Field>
