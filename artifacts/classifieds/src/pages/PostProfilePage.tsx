@@ -30,10 +30,10 @@ function applyWatermark(base64: string, text: string): Promise<string> {
       ctx.shadowColor = "rgba(0,0,0,0.32)";
       ctx.shadowBlur = 2;
 
-      const step = fontSize * 6;
+      const step = fontSize * 8;
       for (let y = -canvas.height; y < canvas.height; y += step) {
         for (let x = -canvas.width; x < canvas.width * 1.5; x += fontSize * text.length * 1.2) {
-          ctx.globalAlpha = 0.23;
+          ctx.globalAlpha = 0.14;
           ctx.fillStyle = "white";
           ctx.fillText(text, x, y);
         }
