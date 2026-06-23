@@ -63,13 +63,13 @@ export default function LocationPage() {
   useSEO({
     title: cityData
       ? isCity
-        ? `Escorts in ${cityData.city}, ${cityData.state}`
-        : `Escorts in ${cityData.area}, ${cityData.city}`
+        ? `${total}+ Verified Independent Escorts in ${cityData.city}, ${cityData.state}`
+        : `Verified Independent Escorts in ${cityData.area}, ${cityData.city}`
       : "Escorts",
     description: cityData
       ? isCity
-        ? `Browse verified escort listings in ${cityData.city}, ${cityData.state}. Find escorts in ${cityData.areas?.map((a: any) => a.area).join(", ")}.`
-        : `${total}+ verified escort profiles in ${cityData.area}, ${cityData.city}, ${cityData.state}. Call or WhatsApp directly.`
+        ? `Looking for high-profile independent escorts in ${cityData.city}?, Discover ${total}+ verified companion profiles with photos, local listings in ${cityData.state}. Find escorts in ${cityData.areas?.map((a: any) => a.area).join(", ")}.`
+        : `Looking for high-profile independent escorts in ${cityData.area}>, Discover ${total}+ verified companion profiles with photos, local listings, ${cityData.state}. Call or WhatsApp directly.`
       : "",
     canonicalPath: cityData ? `/escorts/${slug}` : undefined,
     seoKey: slug ? (isCity ? `city_${cityData?.city_slug ?? slug}` : `area_${slug}`) : undefined,
