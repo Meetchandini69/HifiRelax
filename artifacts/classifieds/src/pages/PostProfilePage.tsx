@@ -18,7 +18,7 @@ function applyWatermark(base64: string, text: string): Promise<string> {
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0);
 
-      const fontSize = Math.max(16, Math.min(img.width / 14, 40));
+      const fontSize = Math.max(14, Math.min(img.width / 18, 28));
       ctx.save();
       ctx.translate(canvas.width / 2, canvas.height / 2);
       ctx.rotate(-Math.PI / 5);
@@ -27,13 +27,13 @@ function applyWatermark(base64: string, text: string): Promise<string> {
       ctx.textBaseline = "middle";
 
       // Shadow for readability
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = 4;
+      ctx.shadowColor = "rgba(0,0,0,0.32)";
+      ctx.shadowBlur = 2;
 
-      const step = fontSize * 3.5;
+      const step = fontSize * 6;
       for (let y = -canvas.height; y < canvas.height; y += step) {
-        for (let x = -canvas.width; x < canvas.width * 1.5; x += fontSize * text.length * 0.65) {
-          ctx.globalAlpha = 0.38;
+        for (let x = -canvas.width; x < canvas.width * 1.5; x += fontSize * text.length * 1.2) {
+          ctx.globalAlpha = 0.23;
           ctx.fillStyle = "white";
           ctx.fillText(text, x, y);
         }
