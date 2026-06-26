@@ -191,7 +191,7 @@ export default function HomePage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {states.map((st: any) => (
-              <Link key={st.state_slug} href={`/${st.state_slug}`}
+              <Link key={st.state_slug} href={`/escorts/${st.state_slug}`}
                 className="group bg-white border border-gray-200 hover:border-rose-300 rounded-2xl p-5 flex items-center gap-4 transition-all hover:shadow-lg hover:shadow-rose-100">
                 <div className="w-12 h-12 bg-rose-50 group-hover:bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors">
                   <MapPin size={20} className="text-rose-600" />

@@ -11,7 +11,7 @@ import { MapPin, Users, ChevronLeft, ChevronRight, Building2, ArrowRight } from 
 
 export default function LocationPage() {
   const { slug } = useParams();
-  const [locType, setLocType] = useState<"city" | "area" | null>(null);
+  const [locType, setLocType] = useState<"state" | "city" | "area" | null>(null);
   const [cityData, setCityData] = useState<any>(null);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -21,33 +21,74 @@ export default function LocationPage() {
   const [pageContent, setPageContent] = useState<any>(null);
 
 
-  useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
-    setNotFound(false);
+useEffect(() => {
+  if (!slug) return;
 
-    api.lookupLocation(slug).then(async (loc) => {
+  setLoading(true);
+  setNotFound(false);
+
+  api.lookupLocation(slug)
+    .then(async (loc) => {
       setLocType(loc.type);
+
+      // STATE
+      if (loc.type === "state") {
+        const data = await api.getStatePage(slug);
+        setCityData(data);
+        setLoading(false);
+        return;
+      }
+
+      // CITY
       if (loc.type === "city") {
         const data = await api.getCityPage(slug);
         setCityData(data);
         setLoading(false);
-      } else {
-        // area — load profiles
-        const data = await api.getProfiles({ area_slug: slug, page: String(page), limit: "12" });
+        return;
+      }
+
+      // AREA
+      if (loc.type === "area") {
+        const data = await api.getProfiles({
+          area_slug: slug,
+          page: String(page),
+          limit: "12",
+        });
+
         setProfiles(data.profiles || []);
         setTotal(data.total || 0);
+
         const areaInfo = await api.getAreaPage(slug);
         setCityData(areaInfo);
         setLoading(false);
+        return;
       }
-    }).catch(() => { setNotFound(true); setLoading(false); });
-  }, [slug]);
+
+      setNotFound(true);
+      setLoading(false);
+    })
+    .catch(() => {
+      setNotFound(true);
+      setLoading(false);
+    });
+
+}, [slug, page]);
 
   useEffect(() => {
     if (!slug || !locType) return;
-    const key = locType === "city" ? `city_${slug}` : `area_${slug}`;
-    api.getPageContent(key).then(setPageContent).catch(() => {});
+    let key = "";
+
+if (locType === "state") {
+  key = `state_${slug}`;
+} else if (locType === "city") {
+  key = `city_${slug}`;
+} else {
+  key = `area_${slug}`;
+}
+
+api.getPageContent(key)
+  .then(setPageContent)
+  .catch(() => {});
   }, [slug, locType]);
 
   useEffect(() => {
@@ -58,22 +99,37 @@ export default function LocationPage() {
   }, [page, locType, slug]);
 
   const totalPages = Math.ceil(total / 12);
-  const isCity = locType === "city";
+  const isState = locType === "state";
+const isCity = locType === "city";
+const isArea = locType === "area";
 
-  useSEO({
-    title: cityData
-      ? isCity
-        ? `${total}+ Verified Independent Escorts in ${cityData.city}, ${cityData.state}`
-        : `Verified Independent Escorts in ${cityData.area}, ${cityData.city}`
-      : "Escorts",
-    description: cityData
-      ? isCity
-        ? `Looking for high-profile independent escorts in ${cityData.city}?, Discover ${total}+ verified companion profiles with photos, local listings in ${cityData.state}. Find escorts in ${cityData.areas?.map((a: any) => a.area).join(", ")}.`
-        : `Looking for high-profile independent escorts in ${cityData.area}>, Discover ${total}+ verified companion profiles with photos, local listings, ${cityData.state}. Call or WhatsApp directly.`
-      : "",
-    canonicalPath: cityData ? `/escorts/${slug}` : undefined,
-    seoKey: slug ? (isCity ? `city_${cityData?.city_slug ?? slug}` : `area_${slug}`) : undefined,
-  });
+useSEO({
+  title: cityData
+    ? isState
+      ? `Escorts in ${cityData.state}`
+      : isCity
+        ? `Escorts in ${cityData.city}, ${cityData.state}`
+        : `Escorts in ${cityData.area}, ${cityData.city}`
+    : "Escorts",
+
+  description: cityData
+    ? isState
+      ? `Browse verified independent escort listings across ${cityData.state}. Explore escorts in ${cityData.cities?.map((c: any) => c.city).join(", ")}.`
+      : isCity
+        ? `Browse verified escort listings in ${cityData.city}, ${cityData.state}. Find escorts in ${cityData.areas?.map((a: any) => a.area).join(", ")}.`
+        : `${total}+ verified escort profiles in ${cityData.area}, ${cityData.city}, ${cityData.state}. Call or WhatsApp directly.`
+    : "",
+
+  canonicalPath: cityData ? `/escorts/${slug}` : undefined,
+
+  seoKey: slug
+    ? isState
+      ? `state_${slug}`
+      : isCity
+        ? `city_${cityData?.city_slug ?? slug}`
+        : `area_${slug}`
+    : undefined,
+});
 
   if (loading) {
     return (
@@ -100,17 +156,102 @@ export default function LocationPage() {
     );
   }
 
-  const breadcrumbItems = isCity ? [
-    { label: "Escorts", href: "/escorts" },
-    { label: cityData.state, href: `/${cityData.state_slug}` },
-    { label: cityData.city },
-  ] : [
-    { label: "Escorts", href: "/escorts" },
-    { label: cityData.state, href: `/${cityData.state_slug}` },
-    { label: cityData.city, href: `/escorts/${cityData.city_slug}` },
-    { label: cityData.area },
-  ];
+ const breadcrumbItems =
+  isState
+    ? [
+        { label: "Escorts", href: "/escorts" },
+        { label: cityData.state },
+      ]
+    : isCity
+    ? [
+        { label: "Escorts", href: "/escorts" },
+        { label: cityData.state, href: `/escorts/${cityData.state_slug}` },
+        { label: cityData.city },
+      ]
+    : [
+        { label: "Escorts", href: "/escorts" },
+        { label: cityData.state, href: `/escorts/${cityData.state_slug}` },
+        { label: cityData.city, href: `/escorts/${cityData.city_slug}` },
+        { label: cityData.area },
+      ];
+if (isState) {
+  const totalListings =
+    cityData.cities?.reduce(
+      (sum: number, c: any) => sum + Number(c.listing_count || 0),
+      0
+    ) || 0;
 
+  return (
+    <>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-5xl mx-auto px-4 py-5">
+            <Breadcrumb items={breadcrumbItems} />
+
+            <h1 className="text-3xl font-bold mt-3">
+              Escorts in {cityData.state}
+            </h1>
+
+            <p className="text-gray-500 mt-2">
+              Browse escort listings across all cities in {cityData.state} —{" "}
+              {totalListings} active listings
+            </p>
+          </div>
+        </div>
+
+        <div className="max-w-5xl mx-auto px-4 py-8">
+    {/* SEO intro paragraph */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8">
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Welcome to VipNightQueens – your trusted directory for verified independent escort profiles in <strong>{cityData.state}</strong>.
+            Our platform covers all major cities including <strong>{cityData.cities?.map((c: any) => c.city).join(", ")}</strong>.
+            Each profile is manually reviewed before going live. Browse by city below to find escorts near you.
+          </p>
+        </div>
+
+     <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Building2 size={18} className="text-rose-600" />
+          Browse by City in {cityData.state}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+          {cityData.cities?.map((city: any) => (
+            <Link
+              key={city.city_slug}
+              href={`/escorts/${city.city_slug}`}
+              className="bg-white border border-gray-200 rounded-xl p-5 hover:border-rose-300 hover:shadow-sm transition-all group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center group-hover:bg-rose-100 transition-colors">
+                  <MapPin size={18} className="text-rose-600" />
+                </div>
+                <ArrowRight size={16} className="text-gray-300 group-hover:text-rose-500 transition-colors mt-1" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-base mb-1">{city.city} Escorts</h3>
+              <p className="text-xs text-gray-500 mb-3">{cityData.state}</p>
+              <div className="flex gap-3 text-xs text-gray-500">
+                <span className="flex items-center gap-1"><Building2 size={10} /> {city.area_count || 0} areas</span>
+                <span className="flex items-center gap-1"><Users size={10} /> {city.listing_count || 0} listings</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        </div>
+
+        <PageContentSection
+          content_heading={pageContent?.content_heading}
+          content_html={pageContent?.content_html}
+          faq_json={pageContent?.faq_json}
+          locationName={cityData.state}
+        />
+
+        <Footer />
+      </div>
+    </>
+  );
+}      
   // ─── CITY PAGE ────────────────────────────────────────────────────────────
   if (isCity) {
     const totalCityListings = cityData.areas?.reduce((s: number, a: any) => s + parseInt(a.listing_count || 0), 0) || 0;

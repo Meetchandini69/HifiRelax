@@ -48,8 +48,6 @@ function Router() {
       <Route path="/escorts" component={ListingsPage} />
       <Route path="/escorts/:slug/:profile_slug" component={ProfilePage} />
       <Route path="/escorts/:slug" component={LocationPage} />
-
-      <Route path="/:state_slug" component={StatePage} />
       <Route component={NotFound} />
     </Switch>
   );

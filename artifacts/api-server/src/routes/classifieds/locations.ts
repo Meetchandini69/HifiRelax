@@ -110,18 +110,62 @@ router.get("/area/:area_slug", async (req, res) => {
 // ── Public: smart lookup (city or area?) ─────────────────────────────────────
 router.get("/lookup/:slug", async (req, res) => {
   const { slug } = req.params;
+
+  console.log("LOOKUP ROUTE HIT:", slug);
+
   try {
+    // 1. Check state
+    const state = await pool.query(
+      `SELECT DISTINCT state, state_slug
+       FROM ec_locations
+       WHERE state_slug = $1
+       LIMIT 1`,
+      [slug]
+    );
+
+    console.log("State Query Result:", state.rows);
+    
+    if (state.rows.length > 0) {
+      return res.json({
+        type: "state",
+        ...state.rows[0],
+      });
+    }
+
+    // 2. Check city
     const city = await pool.query(
-      "SELECT DISTINCT city, city_slug, state, state_slug FROM ec_locations WHERE city_slug=$1 LIMIT 1",
+      `SELECT DISTINCT city, city_slug, state, state_slug
+       FROM ec_locations
+       WHERE city_slug = $1
+       LIMIT 1`,
       [slug]
     );
-    if (city.rows.length > 0) return res.json({ type: "city", ...city.rows[0] });
+
+    if (city.rows.length > 0) {
+      return res.json({
+        type: "city",
+        ...city.rows[0],
+      });
+    }
+
+    // 3. Check area
     const area = await pool.query(
-      "SELECT * FROM ec_locations WHERE area_slug=$1 LIMIT 1",
+      `SELECT *
+       FROM ec_locations
+       WHERE area_slug = $1
+       LIMIT 1`,
       [slug]
     );
-    if (area.rows.length > 0) return res.json({ type: "area", ...area.rows[0] });
+
+    if (area.rows.length > 0) {
+      return res.json({
+        type: "area",
+        ...area.rows[0],
+      });
+    }
+
     return res.status(404).json({ error: "Not found" });
+
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
