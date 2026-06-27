@@ -270,30 +270,52 @@ async function resolveMetaForPath(
         );
       }
 
-      const areaR = await pool.query(
-        `SELECT area, area_slug, city, city_slug, state
-         FROM ec_locations WHERE area_slug = $1 LIMIT 1`,
-        [slug],
-      );
-      if (areaR.rows.length > 0) {
-        const a   = areaR.rows[0];
-        const key = `area_${slug}`;
-        const cnt = await pool.query(
-          `SELECT COUNT(*) AS n
-           FROM ec_profiles p
-           JOIN ec_locations l ON p.location_id = l.id
-           WHERE l.area_slug = $1 AND p.status = 'approved'`,
-          [slug],
-        );
-        const n = parseInt(cnt.rows[0]?.n || "0", 10);
-        return meta(
-          `${mk(`Escorts in ${a.area}, ${a.city}`, key)} | ${siteName}`,
-          md(
-            `${n}+ verified escort profiles in ${a.area}, ${a.city}, ${a.state}. Call or WhatsApp directly.`,
-            key,
-          ),
-        );
-      }
+ const areaR = await pool.query(
+`
+SELECT
+    l.area,
+    l.city,
+    l.state,
+    COUNT(p.id)::int AS listing_count
+FROM ec_locations l
+LEFT JOIN ec_profiles p
+       ON p.location_id=l.id
+      AND p.status='approved'
+WHERE l.area_slug=$1
+GROUP BY l.id
+LIMIT 1
+`,
+[slug]
+);
+
+if (areaR.rows.length > 0) {
+
+    const a = areaR.rows[0];
+
+    const titleTemplate =
+      settings["seo_area_title_template"] ||
+      "{count}+ Verified Independent Escorts in {area}";
+
+    const descTemplate =
+      settings["seo_area_desc_template"] ||
+      "Explore {count}+ verified independent escorts in {area}, {city}.";
+
+    const title = titleTemplate
+      .replaceAll("{count}", String(a.listing_count))
+      .replaceAll("{area}", a.area)
+      .replaceAll("{city}", a.city)
+      .replaceAll("{state}", a.state)
+      .replaceAll("{site_name}", siteName);
+
+    const description = descTemplate
+      .replaceAll("{count}", String(a.listing_count))
+      .replaceAll("{area}", a.area)
+      .replaceAll("{city}", a.city)
+      .replaceAll("{state}", a.state)
+      .replaceAll("{site_name}", siteName);
+
+    return meta(title, description);
+}
     } catch (err) {
       logger.warn({ err }, `seoRenderer: location query failed for "${slug}"`);
     }
