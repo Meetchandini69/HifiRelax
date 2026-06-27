@@ -95,14 +95,72 @@ router.get("/city/:city_slug", async (req, res) => {
 // ── Public: area page (silo) ─────────────────────────────────────────────────
 router.get("/area/:area_slug", async (req, res) => {
   const { area_slug } = req.params;
+
   try {
+    // Location
     const loc = await pool.query(
-      "SELECT * FROM ec_locations WHERE area_slug = $1 LIMIT 1",
+      `SELECT *
+       FROM ec_locations
+       WHERE area_slug = $1
+       LIMIT 1`,
       [area_slug]
     );
-    if (loc.rows.length === 0) return res.status(404).json({ error: "Area not found" });
-    res.json(loc.rows[0]);
-  } catch (err: any) {
+
+    if (loc.rows.length === 0) {
+      return res.status(404).json({ error: "Area not found" });
+    }
+
+    const area = loc.rows[0];
+
+    // Listing Count
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS listing_count
+       FROM ec_profiles
+       WHERE location_id = $1
+       AND status='approved'`,
+      [area.id]
+    );
+
+    const listingCount = countResult.rows[0].listing_count;
+
+    // Settings
+    const settingsResult = await pool.query(`
+      SELECT key,value
+      FROM ec_settings
+      WHERE key IN (
+        'seo_area_title_template',
+        'seo_area_desc_template',
+        'site_name'
+      )
+    `);
+
+   const settings = Object.fromEntries(
+  settingsResult.rows.map((row: any) => [row.key, row.value])
+);
+
+    // Replace variables
+    const metaTitle =
+      settings.seo_area_title_template
+        ?.replaceAll("{count}", String(listingCount))
+        .replaceAll("{area}", area.area)
+        .replaceAll("{city}", area.city)
+        .replaceAll("{site_name}", settings.site_name || "");
+
+    const metaDescription =
+      settings.seo_area_desc_template
+        ?.replaceAll("{count}", String(listingCount))
+        .replaceAll("{area}", area.area)
+        .replaceAll("{city}", area.city)
+        .replaceAll("{site_name}", settings.site_name || "");
+
+    res.json({
+      ...area,
+      listing_count: listingCount,
+      meta_title: metaTitle,
+      meta_description: metaDescription,
+    });
+
+  } catch(err:any){
     res.status(500).json({ error: err.message });
   }
 });
@@ -124,7 +182,7 @@ router.get("/lookup/:slug", async (req, res) => {
     );
 
     console.log("State Query Result:", state.rows);
-    
+
     if (state.rows.length > 0) {
       return res.json({
         type: "state",

@@ -109,15 +109,15 @@ useSEO({
       ? `Escorts in ${cityData.state}`
       : isCity
         ? `Escorts in ${cityData.city}, ${cityData.state}`
-        : `Escorts in ${cityData.area}, ${cityData.city}`
+        : cityData.meta_title
     : "Escorts",
 
   description: cityData
     ? isState
-      ? `Browse verified independent escort listings across ${cityData.state}. Explore escorts in ${cityData.cities?.map((c: any) => c.city).join(", ")}.`
+      ? `Browse escort listings across all cities in ${cityData.state}.`
       : isCity
-        ? `Browse verified escort listings in ${cityData.city}, ${cityData.state}. Find escorts in ${cityData.areas?.map((a: any) => a.area).join(", ")}.`
-        : `${total}+ verified escort profiles in ${cityData.area}, ${cityData.city}, ${cityData.state}. Call or WhatsApp directly.`
+        ? `Browse verified escort listings in ${cityData.city}, ${cityData.state}. Find escorts in ${cityData.areas?.map((a:any)=>a.area).join(", ")}.`
+        : cityData.meta_description
     : "",
 
   canonicalPath: cityData ? `/escorts/${slug}` : undefined,
@@ -126,7 +126,7 @@ useSEO({
     ? isState
       ? `state_${slug}`
       : isCity
-        ? `city_${cityData?.city_slug ?? slug}`
+        ? `city_${slug}`
         : `area_${slug}`
     : undefined,
 });
