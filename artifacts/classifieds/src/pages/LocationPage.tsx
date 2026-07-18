@@ -332,6 +332,12 @@ if (isState) {
           ]
         })}} />
       </div>
+      <PageContentSection
+        content_heading={pageContent?.content_heading}
+        content_html={pageContent?.content_html}
+        faq_json={pageContent?.faq_json}
+        locationName={cityData.city}
+      />
       <Footer />
       </>
     );
