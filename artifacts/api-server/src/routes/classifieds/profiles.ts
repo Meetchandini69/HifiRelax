@@ -37,10 +37,17 @@ router.get("/", async (req, res) => {
     params.push(parseInt(limit)); query += ` LIMIT $${params.length}`;
     params.push(offset); query += ` OFFSET $${params.length}`;
     const result = await pool.query(query, params);
-    const countResult = await pool.query(
-      `SELECT COUNT(*) FROM ec_profiles p LEFT JOIN ec_locations l ON p.location_id=l.id WHERE p.status='approved'${area_slug ? " AND l.area_slug=$1" : ""}`,
-      area_slug ? [area_slug] : []
-    );
+    let countQuery = `
+      SELECT COUNT(*)
+      FROM ec_profiles p
+      LEFT JOIN ec_locations l ON p.location_id=l.id
+      WHERE p.status='approved'
+    `;
+    const countParams: any[] = [];
+    if (area_slug) { countParams.push(area_slug); countQuery += ` AND l.area_slug=$${countParams.length}`; }
+    if (city) { countParams.push(city); countQuery += ` AND l.city=$${countParams.length}`; }
+    if (state) { countParams.push(state); countQuery += ` AND l.state=$${countParams.length}`; }
+    const countResult = await pool.query(countQuery, countParams);
     res.json({ profiles: result.rows, total: parseInt(countResult.rows[0].count) });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

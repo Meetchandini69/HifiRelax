@@ -7,7 +7,7 @@ import ProfileCard from "@/components/ProfileCard";
 import { useSEO } from "@/hooks/useSEO";
 import Footer from "@/components/Footer";
 import PageContentSection from "@/components/PageContentSection";
-import { MapPin, Users, ChevronLeft, ChevronRight, Building2, ArrowRight } from "lucide-react";
+import { MapPin, Users, ChevronLeft, ChevronRight, Building2, ArrowRight, Filter } from "lucide-react";
 
 export default function LocationPage() {
   const { slug } = useParams();
@@ -19,6 +19,7 @@ export default function LocationPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [pageContent, setPageContent] = useState<any>(null);
+  const [citySelectedArea, setCitySelectedArea] = useState("");
 
 
 useEffect(() => {
@@ -43,6 +44,13 @@ useEffect(() => {
       if (loc.type === "city") {
         const data = await api.getCityPage(slug);
         setCityData(data);
+        const listings = await api.getProfiles({
+          ...(citySelectedArea ? { area_slug: citySelectedArea } : { city: data.city }),
+          page: String(page),
+          limit: "12",
+        });
+        setProfiles(listings.profiles || []);
+        setTotal(listings.total || 0);
         setLoading(false);
         return;
       }
@@ -72,7 +80,12 @@ useEffect(() => {
       setLoading(false);
     });
 
-}, [slug, page]);
+}, [slug, page, citySelectedArea]);
+
+  useEffect(() => {
+    setPage(1);
+    setCitySelectedArea("");
+  }, [slug]);
 
   useEffect(() => {
     if (!slug || !locType) return;
@@ -254,91 +267,126 @@ if (isState) {
 }      
   // ─── CITY PAGE ────────────────────────────────────────────────────────────
   if (isCity) {
-    const totalCityListings = cityData.areas?.reduce((s: number, a: any) => s + parseInt(a.listing_count || 0), 0) || 0;
+    const selectedAreaName = citySelectedArea
+      ? cityData.areas?.find((a: any) => a.area_slug === citySelectedArea)?.area
+      : "";
+
     return (
       <>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-            <Breadcrumb items={breadcrumbItems} />
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-3">
-              Escorts in {cityData.city}
-            </h1>
-            <p className="text-gray-500 text-sm mt-1">
-              {cityData.state} · {cityData.areas?.length || 0} areas · {totalCityListings} active listings
-            </p>
-          </div>
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* SEO paragraph */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8">
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Explore verified independent escort profiles in <strong>{cityData.city}, {cityData.state}</strong>.
-              We cover all major areas including <strong>{cityData.areas?.map((a: any) => a.area).join(", ")}</strong>.
-              Each listing is reviewed by our admin team. All escorts are independent and 18+.
-            </p>
-          </div>
-
-          {/* Area cards */}
-          <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Building2 size={16} className="text-rose-600" />
-            Browse by Area in {cityData.city}
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
-            {cityData.areas?.map((area: any) => (
-              <Link
-                key={area.area_slug}
-                href={`/escorts/${area.area_slug}`}
-                className="bg-white border border-gray-200 rounded-xl p-4 hover:border-rose-300 hover:shadow-sm transition-all group text-center"
-              >
-                <div className="w-9 h-9 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-100 transition-colors">
-                  <MapPin size={16} className="text-rose-600" />
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <div className="bg-white border-b border-gray-200">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <Breadcrumb items={breadcrumbItems} />
+              <div className="flex items-center justify-between gap-4 mt-2">
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    Escorts in {selectedAreaName || cityData.city}
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {cityData.state} · {cityData.areas?.length || 0} areas
+                  </p>
                 </div>
-                <div className="font-semibold text-gray-900 text-sm leading-tight">{area.area}</div>
-                <div className="text-[11px] text-gray-400 mt-0.5">{area.listing_count || 0} listings</div>
-              </Link>
-            ))}
+                <span className="text-sm text-gray-500 flex-shrink-0">{total} listings</span>
+              </div>
+            </div>
           </div>
 
-          {/* Recent profiles from this city */}
-          {cityData.recent_profiles?.length > 0 && (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-gray-900">Recent Escorts in {cityData.city}</h2>
-                <Link href={`/escorts/${cityData.areas?.[0]?.area_slug || ""}`} className="text-rose-600 text-sm hover:underline">
-                  View all →
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {cityData.recent_profiles.map((p: any) => (
-                  <ProfileCard key={p.id} p={p} />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex gap-6">
+              <aside className="hidden lg:block w-56 flex-shrink-0">
+                <div className="bg-white border border-gray-200 rounded-xl p-4 sticky top-20">
+                  <div className="flex items-center gap-2 font-semibold text-gray-900 text-sm mb-3">
+                    <Filter size={15} className="text-rose-600" />
+                    Filter by Area
+                  </div>
+                  <button
+                    onClick={() => { setCitySelectedArea(""); setPage(1); }}
+                    className={`w-full text-left text-sm px-2.5 py-1.5 rounded-lg mb-1 transition-colors ${!citySelectedArea ? "bg-rose-50 text-rose-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                  >
+                    All Areas
+                  </button>
+                  {cityData.areas?.map((area: any) => (
+                    <button
+                      key={area.area_slug}
+                      onClick={() => { setCitySelectedArea(area.area_slug); setPage(1); }}
+                      className={`w-full text-left text-sm px-2.5 py-1.5 rounded-lg mb-1 flex items-center gap-1.5 transition-colors ${citySelectedArea === area.area_slug ? "bg-rose-50 text-rose-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+                    >
+                      <MapPin size={11} /> {area.area}
+                    </button>
+                  ))}
+                </div>
+              </aside>
 
-        {/* JSON-LD */}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}/` },
-            { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}/escorts` },
-            { "@type": "ListItem", "position": 3, "name": cityData.state, "item": `${window.location.origin}/${cityData.state_slug}` },
-            { "@type": "ListItem", "position": 4, "name": cityData.city, "item": `${window.location.origin}/escorts/${slug}` },
-          ]
-        })}} />
-      </div>
-      <PageContentSection
-        content_heading={pageContent?.content_heading}
-        content_html={pageContent?.content_html}
-        faq_json={pageContent?.faq_json}
-        locationName={cityData.city}
-      />
-      <Footer />
+              <div className="flex-1 min-w-0">
+                <div className="lg:hidden flex gap-2 mb-4 overflow-x-auto pb-1">
+                  <button
+                    onClick={() => { setCitySelectedArea(""); setPage(1); }}
+                    className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${!citySelectedArea ? "bg-rose-600 text-white border-rose-600" : "border-gray-300 text-gray-600 bg-white hover:border-rose-300"}`}
+                  >
+                    All
+                  </button>
+                  {cityData.areas?.map((area: any) => (
+                    <button
+                      key={area.area_slug}
+                      onClick={() => { setCitySelectedArea(area.area_slug); setPage(1); }}
+                      className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${citySelectedArea === area.area_slug ? "bg-rose-600 text-white border-rose-600" : "border-gray-300 text-gray-600 bg-white hover:border-rose-300"}`}
+                    >
+                      {area.area}
+                    </button>
+                  ))}
+                </div>
+
+                {profiles.length === 0 ? (
+                  <div className="text-center py-20">
+                    <p className="text-gray-400 text-sm">No approved listings found in this area.</p>
+                    <Link href="/dashboard/post" className="mt-4 inline-block text-rose-600 font-semibold text-sm hover:underline">
+                      Post your profile →
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {profiles.map((p: any) => <ProfileCard key={p.id} p={p} />)}
+                    </div>
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-8">
+                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                          className="p-2 rounded-lg border border-gray-200 disabled:opacity-40 hover:border-rose-300 transition-colors">
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                          className="p-2 rounded-lg border border-gray-200 disabled:opacity-40 hover:border-rose-300 transition-colors">
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": `${window.location.origin}/` },
+              { "@type": "ListItem", "position": 2, "name": "Escorts", "item": `${window.location.origin}/escorts` },
+              { "@type": "ListItem", "position": 3, "name": cityData.state, "item": `${window.location.origin}/${cityData.state_slug}` },
+              { "@type": "ListItem", "position": 4, "name": cityData.city, "item": `${window.location.origin}/escorts/${slug}` },
+            ]
+          })}} />
+        </div>
+        <PageContentSection
+          content_heading={pageContent?.content_heading}
+          content_html={pageContent?.content_html}
+          faq_json={pageContent?.faq_json}
+          locationName={cityData.city}
+        />
+        <Footer />
       </>
     );
   }
