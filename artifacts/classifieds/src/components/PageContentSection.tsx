@@ -44,7 +44,7 @@ export default function PageContentSection({
   if (!hasContent && !hasFAQ) return null;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-12">
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-12">
       {hasContent && (
         <section>
           <div className="flex items-center gap-3 mb-5">
