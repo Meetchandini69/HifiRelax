@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Heart, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 
@@ -22,8 +22,8 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ backgroundColor: primary }}>
-                <Heart size={12} className="text-white fill-white" />
+              <div className="w-6 h-6 rounded-md flex items-center justify-center overflow-hidden">
+                <img src="/logo-footer.svg" alt={logoText} className="w-full h-full object-contain" />
               </div>
               <span className="font-bold text-white text-sm">{logoText}</span>
             </div>
