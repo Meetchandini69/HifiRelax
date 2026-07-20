@@ -38,7 +38,7 @@ export default function Navbar() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-6 text-sm">
-              <Link href="/escorts" className="text-gray-600 hover:text-rose-600 transition-colors">Browse</Link>
+              <Link href="/escorts" className="text-gray-600 hover:text-rose-600 transition-colors">Browse Independent Escorts</Link>
               {phone && (
                 <a href={`tel:${phone}`} className="flex items-center gap-1 text-gray-500 text-xs hover:text-gray-700 transition-colors">
                   <Phone size={12} /> {phone}
