@@ -7,6 +7,7 @@ import {
   Globe, MapPin, Building2, LayoutGrid, Search, CheckCircle, Circle,
   X, Edit3, HelpCircle
 } from "lucide-react";
+import RichTextEditor from "@/components/RichTextEditor";
 
 interface Page {
   page_key: string;
@@ -19,6 +20,12 @@ interface Page {
 }
 
 interface FAQ { q: string; a: string; }
+export interface ContentSection {
+  id: string;
+  heading: string;
+  heading_level: "h3" | "h4" | "h5";
+  content_html: string;
+}
 
 interface EditState {
   page_key: string;
@@ -27,6 +34,7 @@ interface EditState {
   slug_ref: string;
   content_heading: string;
   content_html: string;
+  content_sections: ContentSection[];
   faq_json: FAQ[];
   id?: number;
 }
@@ -102,6 +110,75 @@ function FAQEditor({ faq, onChange }: { faq: FAQ[]; onChange: (f: FAQ[]) => void
   );
 }
 
+function ContentSectionsEditor({
+  sections,
+  onChange,
+}: {
+  sections: ContentSection[];
+  onChange: (sections: ContentSection[]) => void;
+}) {
+  const add = () => onChange([
+    ...sections,
+    { id: crypto.randomUUID(), heading: "", heading_level: "h3", content_html: "" },
+  ]);
+  const remove = (index: number) => onChange(sections.filter((_, i) => i !== index));
+  const update = (index: number, patch: Partial<ContentSection>) =>
+    onChange(sections.map((section, i) => i === index ? { ...section, ...patch } : section));
+
+  return (
+    <div className="space-y-4">
+      {sections.map((section, index) => (
+        <div key={section.id} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Content Section #{index + 1}
+            </span>
+            <button
+              type="button"
+              onClick={() => remove(index)}
+              className="text-gray-400 transition-colors hover:text-red-500"
+              aria-label={`Remove content section ${index + 1}`}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px]">
+            <input
+              value={section.heading}
+              onChange={event => update(index, { heading: event.target.value })}
+              placeholder="Section title (optional)"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+            />
+            <select
+              value={section.heading_level}
+              onChange={event => update(index, { heading_level: event.target.value as ContentSection["heading_level"] })}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              aria-label={`Heading level for section ${index + 1}`}
+            >
+              <option value="h3">H3 heading</option>
+              <option value="h4">H4 heading</option>
+              <option value="h5">H5 heading</option>
+            </select>
+          </div>
+          <RichTextEditor
+            value={section.content_html}
+            onChange={content_html => update(index, { content_html })}
+            placeholder="Write this section’s content…"
+            minHeight="150px"
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={add}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:border-rose-400 hover:text-rose-700"
+      >
+        <Plus size={14} /> Add Section
+      </button>
+    </div>
+  );
+}
+
 function PageEditor({
   initial,
   onSave,
@@ -126,7 +203,8 @@ function PageEditor({
         page_name: form.page_name,
         slug_ref: form.slug_ref,
         content_heading: form.content_heading,
-        content_html: form.content_html,
+        content_html: form.content_sections.map(section => section.content_html).join(""),
+        content_sections: form.content_sections,
         faq_json: form.faq_json,
       });
       setSaved(true);
@@ -167,19 +245,16 @@ function PageEditor({
             />
           </div>
 
-          {/* Content HTML */}
+          {/* Content sections */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-              Content Block (HTML supported — p, h3, ul/li, strong, a)
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Content Sections ({form.content_sections.length})
             </label>
-            <textarea
-              value={form.content_html}
-              onChange={e => set("content_html", e.target.value)}
-              placeholder="<p>Coimbatore is Tamil Nadu's second largest city...</p>"
-              rows={10}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono resize-y"
+            <ContentSectionsEditor
+              sections={form.content_sections}
+              onChange={content_sections => set("content_sections", content_sections)}
             />
-            <p className="text-xs text-gray-400 mt-1">This text appears on the public page. Use HTML tags for formatting. Great for SEO — include keywords naturally.</p>
+            <p className="mt-1 text-xs text-gray-400">Add as many sections as needed. Each title can be rendered as H3, H4, or H5 for a clear SEO-friendly structure.</p>
           </div>
 
           {/* FAQs */}
@@ -245,6 +320,11 @@ export default function AdminPageContentPage() {
       slug_ref: p.slug_ref,
       content_heading: existing?.content_heading || "",
       content_html: existing?.content_html || "",
+      content_sections: existing?.content_sections?.length
+        ? existing.content_sections
+        : existing?.content_html
+          ? [{ id: crypto.randomUUID(), heading: "", heading_level: "h3", content_html: existing.content_html }]
+          : [],
       faq_json: existing?.faq_json || [],
       id: existing?.id,
     });

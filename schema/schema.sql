@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS ec_page_content (
   slug_ref        VARCHAR(200),
   content_heading VARCHAR(300),
   content_html    TEXT,
+  content_sections JSONB      DEFAULT '[]',
   faq_json        JSONB        DEFAULT '[]',
   created_at      TIMESTAMPTZ  DEFAULT NOW(),
   updated_at      TIMESTAMPTZ  DEFAULT NOW()
@@ -122,6 +123,9 @@ CREATE TABLE IF NOT EXISTS ec_page_content (
 -- ============================================================
 ALTER TABLE ec_users
   ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) NOT NULL DEFAULT 'independent';
+
+ALTER TABLE ec_page_content
+  ADD COLUMN IF NOT EXISTS content_sections JSONB NOT NULL DEFAULT '[]';
 
 ALTER TABLE ec_profiles
   ADD COLUMN IF NOT EXISTS boost_approved_at        TIMESTAMP,

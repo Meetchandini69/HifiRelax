@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS ec_page_content (
   slug_ref        VARCHAR(200),
   content_heading VARCHAR(300),
   content_html    TEXT,
+  content_sections JSONB      DEFAULT '[]',
   faq_json        JSONB        DEFAULT '[]',
   created_at      TIMESTAMPTZ  DEFAULT NOW(),
   updated_at      TIMESTAMPTZ  DEFAULT NOW()
