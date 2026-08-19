@@ -133,6 +133,7 @@ export default function StatePage() {
       <PageContentSection
         content_heading={pageContent?.content_heading}
         content_html={pageContent?.content_html}
+        content_sections={pageContent?.content_sections}
         faq_json={pageContent?.faq_json}
         locationName={data?.state}
       />
