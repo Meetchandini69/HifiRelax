@@ -278,6 +278,29 @@ router.put("/admin/:id/verify", requireAdmin as any, async (req: any, res) => {
   }
 });
 
+// Admin: update SEO content for an individual profile
+router.put("/admin/:id/seo-content", requireAdmin as any, async (req: any, res) => {
+  const { seo_content_heading, seo_content_html, seo_content_sections } = req.body;
+  try {
+    const r = await pool.query(
+      `UPDATE ec_profiles
+       SET seo_content_heading=$1, seo_content_html=$2, seo_content_sections=$3, updated_at=NOW()
+       WHERE id=$4
+       RETURNING *`,
+      [
+        seo_content_heading || null,
+        seo_content_html || null,
+        JSON.stringify(seo_content_sections || []),
+        req.params.id,
+      ]
+    );
+    if (r.rows.length === 0) return res.status(404).json({ error: "Profile not found" });
+    res.json(r.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // User: get own account limits (for frontend photo/listing limit enforcement)
 router.get("/my-limits", requireAuth as any, async (req: AuthRequest, res) => {
   try {
