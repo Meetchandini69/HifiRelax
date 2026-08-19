@@ -34,7 +34,7 @@ function ProfileSeoEditor({
       ? profile.seo_content_sections
       : profile.seo_content_html
         ? [{ ...newProfileSeoSection(), content_html: profile.seo_content_html }]
-        : []
+        : [newProfileSeoSection()]
   );
   const [saving, setSaving] = useState(false);
 

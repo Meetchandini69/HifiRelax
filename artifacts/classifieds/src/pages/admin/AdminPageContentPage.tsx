@@ -27,6 +27,10 @@ export interface ContentSection {
   content_html: string;
 }
 
+function newContentSection(): ContentSection {
+  return { id: crypto.randomUUID(), heading: "", heading_level: "h3", content_html: "" };
+}
+
 interface EditState {
   page_key: string;
   page_type: string;
@@ -119,7 +123,7 @@ function ContentSectionsEditor({
 }) {
   const add = () => onChange([
     ...sections,
-    { id: crypto.randomUUID(), heading: "", heading_level: "h3", content_html: "" },
+    newContentSection(),
   ]);
   const remove = (index: number) => onChange(sections.filter((_, i) => i !== index));
   const update = (index: number, patch: Partial<ContentSection>) =>
@@ -324,7 +328,7 @@ export default function AdminPageContentPage() {
         ? existing.content_sections
         : existing?.content_html
           ? [{ id: crypto.randomUUID(), heading: "", heading_level: "h3", content_html: existing.content_html }]
-          : [],
+          : [newContentSection()],
       faq_json: existing?.faq_json || [],
       id: existing?.id,
     });
