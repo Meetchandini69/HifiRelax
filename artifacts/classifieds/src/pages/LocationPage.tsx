@@ -133,7 +133,7 @@ useSEO({
         : cityData.meta_description
     : "",
 
-  canonicalPath: cityData ? `/escorts/${slug}` : undefined,
+  canonicalPath: cityData ? (isState ? `/${slug}` : `/escorts/${slug}`) : undefined,
 
   seoKey: slug
     ? isState
@@ -178,12 +178,12 @@ useSEO({
     : isCity
     ? [
         { label: "Escorts", href: "/escorts" },
-        { label: cityData.state, href: `/escorts/${cityData.state_slug}` },
+        { label: cityData.state, href: `/${cityData.state_slug}` },
         { label: cityData.city },
       ]
     : [
         { label: "Escorts", href: "/escorts" },
-        { label: cityData.state, href: `/escorts/${cityData.state_slug}` },
+        { label: cityData.state, href: `/${cityData.state_slug}` },
         { label: cityData.city, href: `/escorts/${cityData.city_slug}` },
         { label: cityData.area },
       ];
