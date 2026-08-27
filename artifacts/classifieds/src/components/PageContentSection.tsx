@@ -8,6 +8,7 @@ interface ContentSection {
   heading?: string | null;
   heading_level?: "h3" | "h4" | "h5";
   content_html?: string | null;
+  placement?: "top" | "bottom";
 }
 
 interface PageContentSectionProps {
@@ -18,6 +19,7 @@ interface PageContentSectionProps {
   locationName?: string;
   showContent?: boolean;
   showFAQ?: boolean;
+  contentPlacement?: "top" | "bottom" | "all";
   className?: string;
 }
 
@@ -51,15 +53,22 @@ export default function PageContentSection({
   locationName,
   showContent = true,
   showFAQ = true,
+  contentPlacement = "all",
   className,
 }: PageContentSectionProps) {
   const hasFAQ = faq_json && faq_json.length > 0;
-  const sections = (content_sections || [])
+  const sectionsWithContent = (content_sections || [])
     .filter(section => section.content_html && section.content_html.trim().length > 0);
   const fallbackHtml = content_html && content_html.trim().length > 0
     ? [{ id: "content-html", heading: null, heading_level: "h3" as const, content_html }]
     : [];
-  const displaySections = sections.length > 0 ? sections : fallbackHtml;
+  const displaySections = sectionsWithContent.length > 0
+    ? sectionsWithContent.filter(section =>
+        contentPlacement === "all" || (section.placement || "bottom") === contentPlacement
+      )
+    : contentPlacement === "top"
+      ? []
+      : fallbackHtml;
   const hasContent = displaySections.length > 0;
   const shouldShowContent = showContent && hasContent;
   const shouldShowFAQ = showFAQ && hasFAQ;

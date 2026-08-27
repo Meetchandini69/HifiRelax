@@ -221,6 +221,7 @@ if (isState) {
           faq_json={pageContent?.faq_json}
           locationName={cityData.state}
           showFAQ={false}
+          contentPlacement="top"
           className="max-w-5xl pt-8 pb-0"
         />
 
@@ -269,7 +270,7 @@ if (isState) {
           content_sections={pageContent?.content_sections}
           faq_json={pageContent?.faq_json}
           locationName={cityData.state}
-          showContent={false}
+          contentPlacement="bottom"
         />
 
         <Footer />
@@ -311,6 +312,7 @@ if (isState) {
             faq_json={pageContent?.faq_json}
             locationName={cityData.city}
             showFAQ={false}
+            contentPlacement="top"
             className="pt-6 pb-0"
           />
 
@@ -408,7 +410,7 @@ if (isState) {
           content_sections={pageContent?.content_sections}
           faq_json={pageContent?.faq_json}
           locationName={cityData.city}
-          showContent={false}
+          contentPlacement="bottom"
         />
         <Footer />
       </>
@@ -439,6 +441,7 @@ if (isState) {
         faq_json={pageContent?.faq_json}
         locationName={cityData ? (locType !== "area" ? cityData.city : cityData.area) : undefined}
         showFAQ={false}
+        contentPlacement="top"
         className="max-w-5xl pt-8 pb-0"
       />
 
@@ -509,7 +512,7 @@ if (isState) {
       content_sections={pageContent?.content_sections}
       faq_json={pageContent?.faq_json}
       locationName={cityData ? (locType !== "area" ? cityData.city : cityData.area) : undefined}
-      showContent={false}
+      contentPlacement="bottom"
     />
     <Footer />
     </>

@@ -76,6 +76,17 @@ export default function ListingsPage() {
         </div>
       </div>
 
+      <PageContentSection
+        content_heading={pageContent?.content_heading}
+        content_html={pageContent?.content_html}
+        content_sections={pageContent?.content_sections}
+        faq_json={pageContent?.faq_json}
+        locationName="Tamil Nadu"
+        showFAQ={false}
+        contentPlacement="top"
+        className="pt-6 pb-0"
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex gap-6">
           {/* Sidebar */}
@@ -172,6 +183,7 @@ export default function ListingsPage() {
         content_sections={pageContent?.content_sections}
         faq_json={pageContent?.faq_json}
         locationName="Tamil Nadu"
+        contentPlacement="bottom"
       />
       <Footer />
     </div>

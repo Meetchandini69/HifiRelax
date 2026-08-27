@@ -24,11 +24,12 @@ export interface ContentSection {
   id: string;
   heading: string;
   heading_level: "h3" | "h4" | "h5";
+  placement: "top" | "bottom";
   content_html: string;
 }
 
 function newContentSection(): ContentSection {
-  return { id: crypto.randomUUID(), heading: "", heading_level: "h3", content_html: "" };
+  return { id: crypto.randomUUID(), heading: "", heading_level: "h3", placement: "bottom", content_html: "" };
 }
 
 interface EditState {
@@ -146,7 +147,7 @@ function ContentSectionsEditor({
               <Trash2 size={14} />
             </button>
           </div>
-          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px]">
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px_120px]">
             <input
               value={section.heading}
               onChange={event => update(index, { heading: event.target.value })}
@@ -162,6 +163,15 @@ function ContentSectionsEditor({
               <option value="h3">H3 heading</option>
               <option value="h4">H4 heading</option>
               <option value="h5">H5 heading</option>
+            </select>
+            <select
+              value={section.placement || "bottom"}
+              onChange={event => update(index, { placement: event.target.value as ContentSection["placement"] })}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+              aria-label={`Display position for section ${index + 1}`}
+            >
+              <option value="bottom">Bottom</option>
+              <option value="top">Top</option>
             </select>
           </div>
           <RichTextEditor
@@ -258,7 +268,7 @@ function PageEditor({
               sections={form.content_sections}
               onChange={content_sections => set("content_sections", content_sections)}
             />
-            <p className="mt-1 text-xs text-gray-400">Add as many sections as needed. Each title can be rendered as H3, H4, or H5 for a clear SEO-friendly structure.</p>
+            <p className="mt-1 text-xs text-gray-400">Use Display position to show a section at the top of the page body or keep it in the bottom SEO content area.</p>
           </div>
 
           {/* FAQs */}
@@ -325,9 +335,9 @@ export default function AdminPageContentPage() {
       content_heading: existing?.content_heading || "",
       content_html: existing?.content_html || "",
       content_sections: existing?.content_sections?.length
-        ? existing.content_sections
+        ? existing.content_sections.map((section: ContentSection) => ({ ...section, placement: section.placement || "bottom" }))
         : existing?.content_html
-          ? [{ id: crypto.randomUUID(), heading: "", heading_level: "h3", content_html: existing.content_html }]
+          ? [{ id: crypto.randomUUID(), heading: "", heading_level: "h3", placement: "bottom", content_html: existing.content_html }]
           : [newContentSection()],
       faq_json: existing?.faq_json || [],
       id: existing?.id,

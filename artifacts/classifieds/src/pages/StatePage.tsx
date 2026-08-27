@@ -88,6 +88,7 @@ export default function StatePage() {
         faq_json={pageContent?.faq_json}
         locationName={data?.state}
         showFAQ={false}
+        contentPlacement="top"
         className="max-w-5xl pt-8 pb-0"
       />
 
@@ -146,7 +147,7 @@ export default function StatePage() {
         content_sections={pageContent?.content_sections}
         faq_json={pageContent?.faq_json}
         locationName={data?.state}
-        showContent={false}
+        contentPlacement="bottom"
       />
       <Footer />
     </div>

@@ -132,6 +132,36 @@ describe("PageContentSection", () => {
     expect(screen.getByText("Intro body")).toBeInTheDocument();
   });
 
+  it("renders only top sections when contentPlacement is top", () => {
+    render(
+      <PageContentSection
+        content_heading="Mixed content"
+        content_sections={[
+          { id: "top", heading: "Top Section", heading_level: "h3", placement: "top", content_html: "<p>Top body</p>" },
+          { id: "bottom", heading: "Bottom Section", heading_level: "h3", placement: "bottom", content_html: "<p>Bottom body</p>" },
+        ]}
+        faq_json={[]}
+        contentPlacement="top"
+      />
+    );
+    expect(screen.getByText("Top Section")).toBeInTheDocument();
+    expect(screen.queryByText("Bottom Section")).toBeNull();
+  });
+
+  it("keeps old sections without placement at the bottom", () => {
+    render(
+      <PageContentSection
+        content_heading="Legacy content"
+        content_sections={[
+          { id: "legacy", heading: "Legacy Section", heading_level: "h3", content_html: "<p>Legacy body</p>" },
+        ]}
+        faq_json={[]}
+        contentPlacement="bottom"
+      />
+    );
+    expect(screen.getByText("Legacy Section")).toBeInTheDocument();
+  });
+
   it("can render FAQs without backend content", () => {
     render(<PageContentSection content_heading={mockContent.content_heading} content_html={mockContent.content_html} faq_json={mockContent.faq_json} showContent={false} />);
     expect(screen.queryByText("Escorts in Peelamedu, Coimbatore")).toBeNull();
