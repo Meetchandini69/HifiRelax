@@ -117,6 +117,21 @@ describe("PageContentSection", () => {
     expect(screen.queryByText(/frequently asked questions/i)).toBeNull();
   });
 
+  it("renders sectioned backend content when content_sections are provided", () => {
+    render(
+      <PageContentSection
+        content_heading="Sectioned content"
+        content_sections={[
+          { id: "intro", heading: "Intro Section", heading_level: "h3", content_html: "<p>Intro body</p>" },
+        ]}
+        faq_json={[]}
+      />
+    );
+    expect(screen.getByText("Sectioned content")).toBeInTheDocument();
+    expect(screen.getByText("Intro Section")).toBeInTheDocument();
+    expect(screen.getByText("Intro body")).toBeInTheDocument();
+  });
+
   it("can render FAQs without backend content", () => {
     render(<PageContentSection content_heading={mockContent.content_heading} content_html={mockContent.content_html} faq_json={mockContent.faq_json} showContent={false} />);
     expect(screen.queryByText("Escorts in Peelamedu, Coimbatore")).toBeNull();

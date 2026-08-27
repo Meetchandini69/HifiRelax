@@ -54,7 +54,13 @@ export default function PageContentSection({
   className,
 }: PageContentSectionProps) {
   const hasFAQ = faq_json && faq_json.length > 0;
-  const hasContent = content_html && content_html.trim().length > 0;
+  const sections = (content_sections || [])
+    .filter(section => section.content_html && section.content_html.trim().length > 0);
+  const fallbackHtml = content_html && content_html.trim().length > 0
+    ? [{ id: "content-html", heading: null, heading_level: "h3" as const, content_html }]
+    : [];
+  const displaySections = sections.length > 0 ? sections : fallbackHtml;
+  const hasContent = displaySections.length > 0;
   const shouldShowContent = showContent && hasContent;
   const shouldShowFAQ = showFAQ && hasFAQ;
 
@@ -74,7 +80,7 @@ export default function PageContentSection({
             </h2>
           </div>
           <div className="space-y-5">
-            {sections.map((section, index) => {
+            {displaySections.map((section, index) => {
               const Heading = section.heading_level || "h3";
               return (
                 <div key={section.id || index}>
