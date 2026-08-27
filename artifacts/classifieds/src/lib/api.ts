@@ -95,6 +95,8 @@ export const api = {
     request(`${API}/classifieds/auth/admin/users/${id}`, { method: "DELETE" }),
   adminVerifyProfile: (id: number, verified: boolean) =>
     request(`${API}/classifieds/profiles/admin/${id}/verify`, { method: "PUT", body: JSON.stringify({ verified }) }),
+  adminUpdateProfileSeo: (id: number, body: object) =>
+    request(`${API}/classifieds/profiles/admin/${id}/seo-content`, { method: "PUT", body: JSON.stringify(body) }),
   getMyLimits: () => request(`${API}/classifieds/profiles/my-limits`),
 
   // User account settings

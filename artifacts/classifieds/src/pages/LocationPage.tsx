@@ -265,6 +265,7 @@ if (isState) {
         <PageContentSection
           content_heading={pageContent?.content_heading}
           content_html={pageContent?.content_html}
+          content_sections={pageContent?.content_sections}
           faq_json={pageContent?.faq_json}
           locationName={cityData.state}
           showContent={false}
@@ -402,6 +403,7 @@ if (isState) {
         <PageContentSection
           content_heading={pageContent?.content_heading}
           content_html={pageContent?.content_html}
+          content_sections={pageContent?.content_sections}
           faq_json={pageContent?.faq_json}
           locationName={cityData.city}
           showContent={false}
@@ -501,6 +503,7 @@ if (isState) {
     <PageContentSection
       content_heading={pageContent?.content_heading}
       content_html={pageContent?.content_html}
+      content_sections={pageContent?.content_sections}
       faq_json={pageContent?.faq_json}
       locationName={cityData ? (locType !== "area" ? cityData.city : cityData.area) : undefined}
       showContent={false}

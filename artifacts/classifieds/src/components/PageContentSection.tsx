@@ -3,10 +3,17 @@ import { ChevronDown, ChevronUp, BookOpen, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FAQ { q: string; a: string; }
+interface ContentSection {
+  id?: string;
+  heading?: string | null;
+  heading_level?: "h3" | "h4" | "h5";
+  content_html?: string | null;
+}
 
 interface PageContentSectionProps {
   content_heading?: string | null;
   content_html?: string | null;
+  content_sections?: ContentSection[] | null;
   faq_json?: FAQ[] | null;
   locationName?: string;
   showContent?: boolean;
@@ -39,6 +46,7 @@ function FAQItem({ q, a }: FAQ) {
 export default function PageContentSection({
   content_heading,
   content_html,
+  content_sections,
   faq_json,
   locationName,
   showContent = true,
@@ -65,13 +73,29 @@ export default function PageContentSection({
               {content_heading || (locationName ? `About Escorts in ${locationName}` : "About This Page")}
             </h2>
           </div>
-          <div
-            className="prose prose-sm prose-gray max-w-none text-gray-600 leading-relaxed
-              [&_p]:mb-3 [&_h3]:font-bold [&_h3]:text-gray-800 [&_h3]:mt-5 [&_h3]:mb-2
-              [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:text-gray-800
-              [&_a]:text-rose-600 [&_a]:underline [&_a]:hover:text-rose-800"
-            dangerouslySetInnerHTML={{ __html: content_html! }}
-          />
+          <div className="space-y-5">
+            {sections.map((section, index) => {
+              const Heading = section.heading_level || "h3";
+              return (
+                <div key={section.id || index}>
+                  {section.heading && (
+                    <Heading className="mb-2 mt-5 text-base font-bold text-gray-800 first:mt-0">
+                      {section.heading}
+                    </Heading>
+                  )}
+                  <div
+                    className="prose prose-sm prose-gray max-w-none text-gray-600 leading-relaxed
+                      [&_p]:mb-3 [&_h3]:font-bold [&_h3]:text-gray-800 [&_h3]:mt-5 [&_h3]:mb-2
+                      [&_h4]:font-bold [&_h4]:text-gray-800 [&_h4]:mt-4 [&_h4]:mb-2
+                      [&_h5]:font-bold [&_h5]:text-gray-800 [&_h5]:mt-3 [&_h5]:mb-2
+                      [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:text-gray-800
+                      [&_a]:text-rose-600 [&_a]:underline [&_a]:hover:text-rose-800"
+                    dangerouslySetInnerHTML={{ __html: section.content_html || "" }}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </section>
       )}
 

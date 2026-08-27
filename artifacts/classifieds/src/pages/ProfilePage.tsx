@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/Breadcrumb";
+import PageContentSection from "@/components/PageContentSection";
 import { useSEO } from "@/hooks/useSEO";
 import { Phone, MessageCircle, Send, Tag, User } from "lucide-react";
 
@@ -183,6 +184,12 @@ export default function ProfilePage() {
           ]
         })}} />
       </div>
+      <PageContentSection
+        content_heading={profile.seo_content_heading}
+        content_html={profile.seo_content_html}
+        content_sections={profile.seo_content_sections}
+        locationName={`${profile.name}${profile.area ? ` in ${profile.area}` : ""}`}
+      />
       <Footer />
     </div>
   );
