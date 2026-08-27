@@ -110,4 +110,16 @@ describe("PageContentSection", () => {
     expect(screen.getByText("Q?")).toBeInTheDocument();
     expect(screen.queryByText(/about this page/i)).toBeNull();
   });
+
+  it("can render backend content without FAQs", () => {
+    render(<PageContentSection content_heading={mockContent.content_heading} content_html={mockContent.content_html} faq_json={mockContent.faq_json} showFAQ={false} />);
+    expect(screen.getByText("Escorts in Peelamedu, Coimbatore")).toBeInTheDocument();
+    expect(screen.queryByText(/frequently asked questions/i)).toBeNull();
+  });
+
+  it("can render FAQs without backend content", () => {
+    render(<PageContentSection content_heading={mockContent.content_heading} content_html={mockContent.content_html} faq_json={mockContent.faq_json} showContent={false} />);
+    expect(screen.queryByText("Escorts in Peelamedu, Coimbatore")).toBeNull();
+    expect(screen.getByText(/frequently asked questions/i)).toBeInTheDocument();
+  });
 });

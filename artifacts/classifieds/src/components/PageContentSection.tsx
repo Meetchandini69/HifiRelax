@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, BookOpen, HelpCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FAQ { q: string; a: string; }
 
@@ -8,6 +9,9 @@ interface PageContentSectionProps {
   content_html?: string | null;
   faq_json?: FAQ[] | null;
   locationName?: string;
+  showContent?: boolean;
+  showFAQ?: boolean;
+  className?: string;
 }
 
 function FAQItem({ q, a }: FAQ) {
@@ -37,15 +41,21 @@ export default function PageContentSection({
   content_html,
   faq_json,
   locationName,
+  showContent = true,
+  showFAQ = true,
+  className,
 }: PageContentSectionProps) {
   const hasFAQ = faq_json && faq_json.length > 0;
   const hasContent = content_html && content_html.trim().length > 0;
+  const shouldShowContent = showContent && hasContent;
+  const shouldShowFAQ = showFAQ && hasFAQ;
 
-  if (!hasContent && !hasFAQ) return null;
+  if (!shouldShowContent && !shouldShowFAQ) return null;
 
   return (
-    <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-12">
-      {hasContent && (
+    <div className={cn("max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16", className)}>
+      <div className={cn("bg-white border border-gray-200 rounded-xl p-5", shouldShowContent && shouldShowFAQ && "space-y-10")}>
+      {shouldShowContent && (
         <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
@@ -65,7 +75,7 @@ export default function PageContentSection({
         </section>
       )}
 
-      {hasFAQ && (
+      {shouldShowFAQ && (
         <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
@@ -83,6 +93,7 @@ export default function PageContentSection({
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }

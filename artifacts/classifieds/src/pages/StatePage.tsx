@@ -81,6 +81,15 @@ export default function StatePage() {
         </div>
       </div>
 
+      <PageContentSection
+        content_heading={pageContent?.content_heading}
+        content_html={pageContent?.content_html}
+        faq_json={pageContent?.faq_json}
+        locationName={data?.state}
+        showFAQ={false}
+        className="max-w-5xl pt-8 pb-0"
+      />
+
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* SEO intro paragraph */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8">
@@ -135,6 +144,7 @@ export default function StatePage() {
         content_html={pageContent?.content_html}
         faq_json={pageContent?.faq_json}
         locationName={data?.state}
+        showContent={false}
       />
       <Footer />
     </div>
