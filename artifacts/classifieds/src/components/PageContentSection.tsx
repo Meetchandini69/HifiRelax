@@ -69,6 +69,7 @@ export default function PageContentSection({
     : contentPlacement === "top"
       ? []
       : fallbackHtml;
+  const pageHeading = content_heading || (locationName ? `About Escorts in ${locationName}` : "About This Page");
   const hasContent = displaySections.length > 0;
   const shouldShowContent = showContent && hasContent;
   const shouldShowFAQ = showFAQ && hasFAQ;
@@ -85,15 +86,16 @@ export default function PageContentSection({
               <BookOpen size={16} className="text-rose-600" />
             </div>
             <h2 className="text-xl font-bold text-gray-900">
-              {content_heading || (locationName ? `About Escorts in ${locationName}` : "About This Page")}
+              {pageHeading}
             </h2>
           </div>
           <div className="space-y-5">
             {displaySections.map((section, index) => {
               const Heading = section.heading_level || "h3";
+              const isDuplicatePageHeading = !!section.heading && section.heading.trim() === pageHeading.trim();
               return (
                 <div key={section.id || index}>
-                  {section.heading && (
+                  {!isDuplicatePageHeading && section.heading && (
                     <Heading className="mb-2 mt-5 text-base font-bold text-gray-800 first:mt-0">
                       {section.heading}
                     </Heading>

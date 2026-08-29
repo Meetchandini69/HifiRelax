@@ -33,6 +33,25 @@ describe("PageContentSection", () => {
     expect(screen.getByText("Escorts in Peelamedu, Coimbatore")).toBeInTheDocument();
   });
 
+  it("does not duplicate a section title when the content heading already matches a section heading", () => {
+    render(
+      <PageContentSection
+        content_heading="Budget-Friendly Call Girls in T Nagar"
+        content_sections={[
+          {
+            id: "intro",
+            heading: "Budget-Friendly Call Girls in T Nagar",
+            heading_level: "h3",
+            content_html: "<p>Body text here.</p>",
+          },
+        ]}
+        faq_json={[]}
+      />
+    );
+
+    expect(screen.getAllByText("Budget-Friendly Call Girls in T Nagar")).toHaveLength(1);
+  });
+
   it("renders HTML content correctly (paragraphs, headings, list items)", () => {
     render(<PageContentSection content_html={mockContent.content_html} faq_json={[]} />);
     expect(screen.getByText("Find the best escorts in Peelamedu here.")).toBeInTheDocument();
