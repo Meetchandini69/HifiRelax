@@ -167,6 +167,34 @@ describe("PageContentSection", () => {
     expect(screen.queryByText("Bottom Section")).toBeNull();
   });
 
+  it("does not repeat the page content heading in the bottom section when top content exists", () => {
+    const contentSections = [
+      { id: "top", heading: "Top Section", heading_level: "h3" as const, placement: "top" as const, content_html: "<p>Top body</p>" },
+      { id: "bottom", heading: "Bottom Section", heading_level: "h3" as const, placement: "bottom" as const, content_html: "<p>Bottom body</p>" },
+    ];
+
+    const { rerender } = render(
+      <PageContentSection
+        content_heading="Section title"
+        content_sections={contentSections}
+        faq_json={[]}
+        contentPlacement="top"
+      />
+    );
+    expect(screen.getByText("Section title")).toBeInTheDocument();
+
+    rerender(
+      <PageContentSection
+        content_heading="Section title"
+        content_sections={contentSections}
+        faq_json={[]}
+        contentPlacement="bottom"
+      />
+    );
+    expect(screen.queryByText("Section title")).toBeNull();
+    expect(screen.getByText("Bottom Section")).toBeInTheDocument();
+  });
+
   it("keeps old sections without placement at the bottom", () => {
     render(
       <PageContentSection

@@ -70,9 +70,11 @@ export default function PageContentSection({
       ? []
       : fallbackHtml;
   const pageHeading = content_heading || (locationName ? `About Escorts in ${locationName}` : "About This Page");
+  const hasTopSections = sectionsWithContent.some(section => (section.placement || "bottom") === "top");
   const hasContent = displaySections.length > 0;
   const shouldShowContent = showContent && hasContent;
   const shouldShowFAQ = showFAQ && hasFAQ;
+  const shouldShowPageHeading = !(contentPlacement === "bottom" && hasTopSections);
 
   if (!shouldShowContent && !shouldShowFAQ) return null;
 
@@ -81,14 +83,16 @@ export default function PageContentSection({
       <div className={cn("bg-white border border-gray-200 rounded-xl p-5", shouldShowContent && shouldShowFAQ && "space-y-10")}>
       {shouldShowContent && (
         <section>
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
-              <BookOpen size={16} className="text-rose-600" />
+          {shouldShowPageHeading && (
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
+                <BookOpen size={16} className="text-rose-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {pageHeading}
+              </h2>
             </div>
-            <h2 className="text-xl font-bold text-gray-900">
-              {pageHeading}
-            </h2>
-          </div>
+          )}
           <div className="space-y-5">
             {displaySections.map((section, index) => {
               const Heading = section.heading_level || "h3";
