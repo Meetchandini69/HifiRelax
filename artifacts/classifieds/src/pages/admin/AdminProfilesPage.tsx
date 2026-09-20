@@ -64,9 +64,9 @@ function ProfileSeoEditor({
       <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-rose-600">Profile SEO Content</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-rose-600">Profile Content</p>
             <h2 className="mt-1 text-base font-bold text-gray-900">{profile.title}</h2>
-            <p className="mt-0.5 text-xs text-gray-500">Add location-specific information and keywords for this profile page.</p>
+            <p className="mt-0.5 text-xs text-gray-500">Add custom information, services, availability, and location details for this profile.</p>
           </div>
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200" aria-label="Close SEO editor">
             <X size={16} />
@@ -125,7 +125,7 @@ function ProfileSeoEditor({
                   <RichTextEditor
                     value={section.content_html}
                     onChange={content_html => updateSection(index, { content_html })}
-                    placeholder="Write profile-specific SEO content…"
+                    placeholder="Write content for this profile…"
                     minHeight="150px"
                   />
                 </div>
@@ -138,7 +138,7 @@ function ProfileSeoEditor({
                 <Plus size={14} /> Add Section
               </button>
             </div>
-            <p className="mt-1 text-xs text-gray-400">Use multiple sections to cover the profile, services, area, and visitor information naturally.</p>
+            <p className="mt-1 text-xs text-gray-400">Use multiple sections to describe this profile, services, area, availability, and visitor information.</p>
           </div>
         </div>
 
@@ -149,7 +149,7 @@ function ProfileSeoEditor({
             disabled={saving}
             className="flex items-center gap-2 rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60"
           >
-            <Save size={15} /> {saving ? "Saving…" : "Save SEO Content"}
+            <Save size={15} /> {saving ? "Saving…" : "Save Profile Content"}
           </button>
         </div>
       </div>
@@ -294,7 +294,7 @@ export default function AdminProfilesPage() {
                       onClick={() => setSeoProfile(p)}
                       className="flex items-center gap-1 text-xs bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors"
                     >
-                      <Edit3 size={13} /> SEO Content
+                      <Edit3 size={13} /> Profile Content
                     </button>
                     <button onClick={() => setSelectedProfile(p)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                       <Eye size={15} />
