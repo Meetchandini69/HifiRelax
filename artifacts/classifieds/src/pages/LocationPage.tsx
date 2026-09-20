@@ -380,6 +380,25 @@ if (isState) {
                   ))}
                 </div>
 
+                <div className="lg:hidden bg-white border border-gray-200 rounded-xl p-4 mb-4">
+                  <div className="flex items-center gap-2 font-semibold text-gray-900 text-sm mb-3">
+                    <MapPin size={15} className="text-rose-600" />
+                    Local Areas in {cityData.city}
+                  </div>
+                  <div className="space-y-1">
+                    {cityAreas.map((area: any) => (
+                      <Link
+                        key={area.area_slug}
+                        href={`/escorts/${area.area_slug}`}
+                        className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-gray-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                      >
+                        <MapPin size={12} />
+                        <span>{area.area}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
                 {profiles.length === 0 ? (
                   <div className="text-center py-20">
                     <p className="text-gray-400 text-sm">No approved listings found in this area.</p>
