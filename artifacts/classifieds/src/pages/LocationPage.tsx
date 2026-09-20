@@ -7,7 +7,7 @@ import ProfileCard from "@/components/ProfileCard";
 import { useSEO } from "@/hooks/useSEO";
 import Footer from "@/components/Footer";
 import PageContentSection from "@/components/PageContentSection";
-import { MapPin, Users, ChevronLeft, ChevronRight, Building2, ArrowRight, Filter } from "lucide-react";
+import { MapPin, Users, ChevronLeft, ChevronRight, Building2, ArrowRight, Filter, Search } from "lucide-react";
 
 export default function LocationPage() {
   const { slug } = useParams();
@@ -20,6 +20,7 @@ export default function LocationPage() {
   const [notFound, setNotFound] = useState(false);
   const [pageContent, setPageContent] = useState<any>(null);
   const [citySelectedArea, setCitySelectedArea] = useState("");
+  const [areaSearch, setAreaSearch] = useState("");
 
 
 useEffect(() => {
@@ -85,6 +86,7 @@ useEffect(() => {
   useEffect(() => {
     setPage(1);
     setCitySelectedArea("");
+    setAreaSearch("");
   }, [slug]);
 
   useEffect(() => {
@@ -115,6 +117,10 @@ api.getPageContent(key)
   const isState = locType === "state";
 const isCity = locType === "city";
 const isArea = locType === "area";
+  const cityAreas = cityData?.areas || [];
+  const filteredCityAreas = cityAreas.filter((area: any) =>
+    area.area.toLowerCase().includes(areaSearch.trim().toLowerCase())
+  );
 
 useSEO({
   title: cityData
@@ -324,13 +330,24 @@ if (isState) {
                     <Filter size={15} className="text-rose-600" />
                     Filter by Area
                   </div>
+                  <label className="relative block mb-3">
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="search"
+                      value={areaSearch}
+                      onChange={(e) => setAreaSearch(e.target.value)}
+                      placeholder={`Search local areas in ${cityData.city}`}
+                      aria-label={`Search local areas in ${cityData.city}`}
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-8 pr-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-rose-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-100"
+                    />
+                  </label>
                   <button
                     onClick={() => { setCitySelectedArea(""); setPage(1); }}
                     className={`w-full text-left text-sm px-2.5 py-1.5 rounded-lg mb-1 transition-colors ${!citySelectedArea ? "bg-rose-50 text-rose-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
                   >
                     All Areas
                   </button>
-                  {cityData.areas?.map((area: any) => (
+                  {filteredCityAreas.map((area: any) => (
                     <button
                       key={area.area_slug}
                       onClick={() => { setCitySelectedArea(area.area_slug); setPage(1); }}
@@ -339,6 +356,9 @@ if (isState) {
                       <MapPin size={11} /> {area.area}
                     </button>
                   ))}
+                  {filteredCityAreas.length === 0 && (
+                    <p className="px-2.5 py-2 text-xs text-gray-400">No local areas found.</p>
+                  )}
                 </div>
               </aside>
 
@@ -350,7 +370,7 @@ if (isState) {
                   >
                     All
                   </button>
-                  {cityData.areas?.map((area: any) => (
+                  {filteredCityAreas.map((area: any) => (
                     <button
                       key={area.area_slug}
                       onClick={() => { setCitySelectedArea(area.area_slug); setPage(1); }}

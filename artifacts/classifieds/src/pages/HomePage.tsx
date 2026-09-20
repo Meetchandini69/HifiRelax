@@ -139,7 +139,7 @@ export default function HomePage() {
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4 leading-tight">
             Find Your Perfect<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-400">Matching Companion</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-400">Matching Independent Escorts Companionship</span>
           </h1>
           <p className="text-gray-300 text-base sm:text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
             {settings.site_tagline || "Verified independent escort listings across Tamil Nadu — discreet, safe, and always up-to-date"}
@@ -164,7 +164,7 @@ export default function HomePage() {
           {/* Stat pills */}
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             {[
-              { icon: CheckCircle, label: `${stats?.approved || "0"}+ Active Listings`, color: "text-green-400" },
+              { icon: CheckCircle, label: `${stats?.approved || "0"}+ Active Escorts Profiles`, color: "text-green-400" },
               { icon: Users, label: `${stats?.users || "0"}+ Members`, color: "text-blue-400" },
               { icon: MapPin, label: `${states.length} States Covered`, color: "text-yellow-400" },
               { icon: Clock, label: "24/7 Available", color: "text-purple-400" },
@@ -298,8 +298,8 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-gray-950 to-rose-950 text-white py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-black mb-2">Why Choose EliteEscorts?</h2>
-            <p className="text-gray-400 text-sm">Tamil Nadu's most trusted adult classifieds platform</p>
+            <h2 className="text-3xl font-black mb-2">Why Choose VipNightQueens?</h2>
+            <p className="text-gray-400 text-sm">Tamil Nadu's most trusted adult Independent Escorts classifieds platform</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {WHY_US.map(({ icon: Icon, title, desc }) => (
@@ -319,7 +319,7 @@ export default function HomePage() {
       <section className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-black text-gray-900 mb-2">Frequently Asked Questions</h2>
-          <p className="text-gray-500 text-sm">Everything you need to know about using EliteEscorts</p>
+          <p className="text-gray-500 text-sm">Everything you need to know about using VipNightQueens</p>
         </div>
         <div className="space-y-3">
           {FAQ_DATA.map(({ q, a }) => <FAQItem key={q} q={q} a={a} />)}
@@ -331,7 +331,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-lg font-bold text-gray-900 mb-3">Escort Services in Tamil Nadu</h2>
           <p className="text-sm text-gray-600 leading-relaxed mb-4">
-            EliteEscorts is Tamil Nadu's premier escort classifieds platform. We host verified independent escort profiles
+            VipNightQueens is Tamil Nadu's premier independent escort service classifieds platform. We host verified independent escort profiles
             from major cities including <Link href="/escorts/coimbatore" className="text-rose-600 hover:underline">Coimbatore</Link> and{" "}
             <Link href="/escorts/chennai" className="text-rose-600 hover:underline">Chennai</Link>, covering key areas like{" "}
             <Link href="/escorts/gandhipuram" className="text-rose-600 hover:underline">Gandhipuram</Link>,{" "}
