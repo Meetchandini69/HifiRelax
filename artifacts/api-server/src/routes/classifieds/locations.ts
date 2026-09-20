@@ -50,7 +50,26 @@ router.get("/state/:state_slug", async (req, res) => {
     `, [state_slug]);
     if (cities.rows.length === 0) return res.status(404).json({ error: "State not found" });
     const { state, state_slug: slug } = cities.rows[0];
-    res.json({ state, state_slug: slug, cities: cities.rows });
+    const pageContent = await pool.query(
+      `SELECT featured_profile_ids, featured_profile_count
+       FROM ec_page_content WHERE page_key = $1`,
+      [`state_${state_slug}`]
+    );
+    const config = pageContent.rows[0];
+    const selectedIds = (config?.featured_profile_ids || []).map(Number).filter(Boolean);
+    const profileLimit = Number(config?.featured_profile_count) || selectedIds.length;
+    let featuredProfiles: any[] = [];
+    if (selectedIds.length && profileLimit > 0) {
+      const profiles = await pool.query(
+        `SELECT p.*, l.state, l.city, l.area, l.area_slug, l.city_slug, l.state_slug, l.url_base
+         FROM ec_profiles p JOIN ec_locations l ON p.location_id = l.id
+         WHERE p.id = ANY($1::int[]) AND p.status = 'approved' AND l.state_slug = $2`,
+        [selectedIds, state_slug]
+      );
+      const byId = new Map(profiles.rows.map((profile: any) => [profile.id, profile]));
+      featuredProfiles = selectedIds.map((id: number) => byId.get(id)).filter(Boolean).slice(0, profileLimit);
+    }
+    res.json({ state, state_slug: slug, cities: cities.rows, featured_profiles: featuredProfiles });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

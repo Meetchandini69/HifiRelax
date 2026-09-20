@@ -41,6 +41,8 @@ interface EditState {
   content_html: string;
   content_sections: ContentSection[];
   faq_json: FAQ[];
+  featured_profile_ids: number[];
+  featured_profile_count: number;
   id?: number;
 }
 
@@ -205,6 +207,14 @@ function PageEditor({
   const [form, setForm] = useState<EditState>({ ...initial });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [stateProfiles, setStateProfiles] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (form.page_type !== "state" || !form.slug_ref) return;
+    api.adminGetProfiles({ status: "approved", state_slug: form.slug_ref, limit: "1000" })
+      .then(data => setStateProfiles(data.profiles || []))
+      .catch(() => setStateProfiles([]));
+  }, [form.page_type, form.slug_ref]);
 
   const set = (k: keyof EditState, v: any) => setForm(f => ({ ...f, [k]: v }));
 
@@ -220,6 +230,8 @@ function PageEditor({
         content_html: form.content_sections.map(section => section.content_html).join(""),
         content_sections: form.content_sections,
         faq_json: form.faq_json,
+        featured_profile_ids: form.featured_profile_ids,
+        featured_profile_count: form.featured_profile_count,
       });
       setSaved(true);
       setTimeout(() => { setSaved(false); onSave(); }, 800);
@@ -246,6 +258,53 @@ function PageEditor({
         </div>
 
         <div className="px-6 py-6 space-y-6">
+          {form.page_type === "state" && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Featured Profiles on State Page
+                  </label>
+                  <p className="mt-1 text-xs text-gray-500">Choose approved profiles and change the display count whenever needed.</p>
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  max={form.featured_profile_ids.length}
+                  value={form.featured_profile_count}
+                  onChange={event => set("featured_profile_count", Math.max(0, Number(event.target.value) || 0))}
+                  className="w-20 rounded-lg border border-gray-200 bg-white px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Number of featured profiles"
+                />
+              </div>
+              {stateProfiles.length === 0 ? (
+                <p className="rounded-lg bg-white px-3 py-3 text-xs text-gray-500">No approved profiles are available for this state.</p>
+              ) : (
+                <div className="max-h-64 space-y-2 overflow-y-auto">
+                  {stateProfiles.map(profile => {
+                    const checked = form.featured_profile_ids.includes(profile.id);
+                    return (
+                      <label key={profile.id} className="flex cursor-pointer items-center gap-3 rounded-lg bg-white px-3 py-2 text-sm hover:bg-blue-50">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => set("featured_profile_ids", checked
+                            ? form.featured_profile_ids.filter(id => id !== profile.id)
+                            : [...form.featured_profile_ids, profile.id])}
+                          className="h-4 w-4 accent-blue-600"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium text-gray-800">{profile.title || profile.name}</span>
+                          <span className="block text-xs text-gray-500">{profile.area}, {profile.city}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Content heading */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
@@ -340,6 +399,8 @@ export default function AdminPageContentPage() {
           ? [{ id: crypto.randomUUID(), heading: "", heading_level: "h3", placement: "bottom", content_html: existing.content_html }]
           : [newContentSection()],
       faq_json: existing?.faq_json || [],
+      featured_profile_ids: (existing?.featured_profile_ids || []).map(Number).filter(Boolean),
+      featured_profile_count: Number(existing?.featured_profile_count) || 0,
       id: existing?.id,
     });
   };

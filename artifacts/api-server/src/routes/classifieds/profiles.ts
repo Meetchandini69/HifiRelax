@@ -200,18 +200,28 @@ router.delete("/:id", requireAuth as any, async (req: AuthRequest, res) => {
 
 // Admin: list all profiles
 router.get("/admin/all", requireAdmin as any, async (req: any, res) => {
-  const { status, page = "1" } = req.query as Record<string, string>;
-  const offset = (parseInt(page) - 1) * 20;
+  const { status, state_slug, page = "1", limit = "20" } = req.query as Record<string, string>;
+  const pageSize = Math.min(Math.max(parseInt(limit) || 20, 1), 1000);
+  const offset = (parseInt(page) - 1) * pageSize;
   try {
     let query = `SELECT p.*, l.state, l.city, l.area, l.area_slug, u.email as user_email FROM ec_profiles p LEFT JOIN ec_locations l ON p.location_id=l.id LEFT JOIN ec_users u ON p.user_id=u.id`;
     const params: any[] = [];
-    if (status) { params.push(status); query += ` WHERE p.status=$${params.length}`; }
-    query += ` ORDER BY p.created_at DESC LIMIT 20 OFFSET $${params.length + 1}`;
+    const filters: string[] = [];
+    if (status) { params.push(status); filters.push(`p.status=$${params.length}`); }
+    if (state_slug) { params.push(state_slug); filters.push(`l.state_slug=$${params.length}`); }
+    if (filters.length) query += ` WHERE ${filters.join(" AND ")}`;
+    query += ` ORDER BY p.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(pageSize);
     params.push(offset);
     const result = await pool.query(query, params);
-    const countQ = status
-      ? await pool.query("SELECT COUNT(*) FROM ec_profiles WHERE status=$1", [status])
-      : await pool.query("SELECT COUNT(*) FROM ec_profiles");
+    const countParams: any[] = [];
+    const countFilters: string[] = [];
+    if (status) { countParams.push(status); countFilters.push(`p.status=$${countParams.length}`); }
+    if (state_slug) { countParams.push(state_slug); countFilters.push(`l.state_slug=$${countParams.length}`); }
+    const countQ = await pool.query(
+      `SELECT COUNT(*) FROM ec_profiles p LEFT JOIN ec_locations l ON p.location_id=l.id${countFilters.length ? ` WHERE ${countFilters.join(" AND ")}` : ""}`,
+      countParams
+    );
     res.json({ profiles: result.rows, total: parseInt(countQ.rows[0].count) });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

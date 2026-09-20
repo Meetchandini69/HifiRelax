@@ -88,19 +88,22 @@ pageContentRouter.get("/admin/all-pages", requireAuth, requireAdmin, async (_req
 
 // ── Admin: upsert page content ───────────────────────────────────────────────
 pageContentRouter.post("/admin/upsert", requireAuth, requireAdmin, async (req, res) => {
-  const { page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json } = req.body;
+  const { page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json, featured_profile_ids, featured_profile_count } = req.body;
   if (!page_key) return res.status(400).json({ error: "page_key required" });
 
   const r = await pool.query(
-    `INSERT INTO ec_page_content (page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())
+    `INSERT INTO ec_page_content (page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json, featured_profile_ids, featured_profile_count, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())
      ON CONFLICT (page_key) DO UPDATE SET
        page_type=EXCLUDED.page_type, page_name=EXCLUDED.page_name, slug_ref=EXCLUDED.slug_ref,
         content_heading=EXCLUDED.content_heading, content_html=EXCLUDED.content_html,
-        content_sections=EXCLUDED.content_sections, faq_json=EXCLUDED.faq_json, updated_at=NOW()
+        content_sections=EXCLUDED.content_sections, faq_json=EXCLUDED.faq_json,
+        featured_profile_ids=EXCLUDED.featured_profile_ids,
+        featured_profile_count=EXCLUDED.featured_profile_count, updated_at=NOW()
      RETURNING *`,
     [page_key, page_type || "area", page_name || page_key, slug_ref || null,
-      content_heading || null, content_html || null, JSON.stringify(content_sections || []), JSON.stringify(faq_json || [])]
+      content_heading || null, content_html || null, JSON.stringify(content_sections || []), JSON.stringify(faq_json || []),
+      JSON.stringify(featured_profile_ids || []), Number(featured_profile_count) || 0]
   );
   res.json(r.rows[0]);
 });

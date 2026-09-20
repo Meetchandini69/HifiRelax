@@ -6,6 +6,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import { useSEO } from "@/hooks/useSEO";
 import Footer from "@/components/Footer";
 import PageContentSection from "@/components/PageContentSection";
+import ProfileCard from "@/components/ProfileCard";
 import { MapPin, Users, ArrowRight, Building2 } from "lucide-react";
 
 export default function StatePage() {
@@ -129,6 +130,20 @@ export default function StatePage() {
             </Link>
           ))}
         </div>
+
+        {data.featured_profiles?.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Users size={18} className="text-rose-600" />
+              Featured Profiles in {data.state}
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {data.featured_profiles.map((profile: any) => (
+                <ProfileCard key={profile.id} p={profile} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Schema.org breadcrumb JSON-LD */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({

@@ -128,7 +128,9 @@ ALTER TABLE ec_users
   ADD COLUMN IF NOT EXISTS account_type VARCHAR(20) NOT NULL DEFAULT 'independent';
 
 ALTER TABLE ec_page_content
-  ADD COLUMN IF NOT EXISTS content_sections JSONB NOT NULL DEFAULT '[]';
+  ADD COLUMN IF NOT EXISTS content_sections JSONB NOT NULL DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS featured_profile_ids JSONB NOT NULL DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS featured_profile_count INTEGER NOT NULL DEFAULT 0;
 
 ALTER TABLE ec_profiles
   ADD COLUMN IF NOT EXISTS seo_content_heading  VARCHAR(300),
