@@ -7,7 +7,7 @@ import ProfileCard from "@/components/ProfileCard";
 import { useSEO } from "@/hooks/useSEO";
 import Footer from "@/components/Footer";
 import PageContentSection from "@/components/PageContentSection";
-import { MapPin, Users, ChevronLeft, ChevronRight, Building2, ArrowRight, Filter } from "lucide-react";
+import { MapPin, Users, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Building2, ArrowRight, Filter } from "lucide-react";
 
 export default function LocationPage() {
   const { slug } = useParams();
@@ -20,6 +20,7 @@ export default function LocationPage() {
   const [notFound, setNotFound] = useState(false);
   const [pageContent, setPageContent] = useState<any>(null);
   const [citySelectedArea, setCitySelectedArea] = useState("");
+  const [localAreasExpanded, setLocalAreasExpanded] = useState(false);
 
 
 useEffect(() => {
@@ -85,6 +86,7 @@ useEffect(() => {
   useEffect(() => {
     setPage(1);
     setCitySelectedArea("");
+    setLocalAreasExpanded(false);
   }, [slug]);
 
   useEffect(() => {
@@ -116,6 +118,8 @@ api.getPageContent(key)
 const isCity = locType === "city";
 const isArea = locType === "area";
   const cityAreas = cityData?.areas || [];
+  const visibleCityAreas = localAreasExpanded ? cityAreas : cityAreas.slice(0, 5);
+  const hasMoreCityAreas = cityAreas.length > 5;
 
 useSEO({
   title: cityData
@@ -347,7 +351,7 @@ if (isState) {
                     Local Areas in {cityData.city}
                   </div>
                   <div className="space-y-1">
-                    {cityAreas.map((area: any) => (
+                    {visibleCityAreas.map((area: any) => (
                       <Link
                         key={area.area_slug}
                         href={`/escorts/${area.area_slug}`}
@@ -357,6 +361,16 @@ if (isState) {
                         <span>{area.area}</span>
                       </Link>
                     ))}
+                    {hasMoreCityAreas && (
+                      <button
+                        type="button"
+                        onClick={() => setLocalAreasExpanded(expanded => !expanded)}
+                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-semibold text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors"
+                      >
+                        {localAreasExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        {localAreasExpanded ? "Show less" : `Show more (${cityAreas.length - 5})`}
+                      </button>
+                    )}
                   </div>
                 </div>
               </aside>
@@ -386,7 +400,7 @@ if (isState) {
                     Local Areas in {cityData.city}
                   </div>
                   <div className="space-y-1">
-                    {cityAreas.map((area: any) => (
+                    {visibleCityAreas.map((area: any) => (
                       <Link
                         key={area.area_slug}
                         href={`/escorts/${area.area_slug}`}
@@ -396,6 +410,16 @@ if (isState) {
                         <span>{area.area}</span>
                       </Link>
                     ))}
+                    {hasMoreCityAreas && (
+                      <button
+                        type="button"
+                        onClick={() => setLocalAreasExpanded(expanded => !expanded)}
+                        className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-gray-200 px-2.5 py-2 text-xs font-semibold text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors"
+                      >
+                        {localAreasExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        {localAreasExpanded ? "Show less" : `Show more (${cityAreas.length - 5})`}
+                      </button>
+                    )}
                   </div>
                 </div>
 
