@@ -335,7 +335,7 @@ if (isState) {
                   >
                     All Areas
                   </button>
-                  {cityAreas.map((area: any) => (
+                  {visibleCityAreas.map((area: any) => (
                     <button
                       key={area.area_slug}
                       onClick={() => { setCitySelectedArea(area.area_slug); setPage(1); }}
@@ -383,7 +383,7 @@ if (isState) {
                   >
                     All
                   </button>
-                  {cityAreas.map((area: any) => (
+                  {visibleCityAreas.map((area: any) => (
                     <button
                       key={area.area_slug}
                       onClick={() => { setCitySelectedArea(area.area_slug); setPage(1); }}
