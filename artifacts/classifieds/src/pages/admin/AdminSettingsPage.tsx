@@ -60,6 +60,42 @@ const ROBOTS_OPTIONS = [
   { value: "noindex, nofollow", label: "noindex, nofollow — hide page & don't follow links" },
 ];
 
+type FooterLinkItem = { label: string; href: string };
+type FooterLinkGroup = { heading: string; links: FooterLinkItem[] };
+
+const DEFAULT_FOOTER_GROUPS: FooterLinkGroup[] = [
+  { heading: "HELP / INFO", links: [] },
+  { heading: "USEFUL LINKS", links: [] },
+];
+
+function parseFooterGroups(value: string, legacyValue = "[]"): FooterLinkGroup[] {
+  try {
+    const groups = JSON.parse(value || "null");
+    if (Array.isArray(groups)) {
+      return groups
+        .filter(group => group && typeof group.heading === "string" && Array.isArray(group.links))
+        .map(group => ({
+          heading: group.heading,
+          links: group.links.filter((link: FooterLinkItem) =>
+            link && typeof link.label === "string" && typeof link.href === "string"
+          ),
+        }));
+    }
+  } catch {}
+  try {
+    const legacyLinks = JSON.parse(legacyValue || "[]");
+    if (Array.isArray(legacyLinks) && legacyLinks.length) {
+      return [{
+        heading: "Quick Links",
+        links: legacyLinks.filter((link: FooterLinkItem) =>
+          link && typeof link.label === "string" && typeof link.href === "string"
+        ),
+      }];
+    }
+  } catch {}
+  return DEFAULT_FOOTER_GROUPS;
+}
+
 // ─── SEO Row ─────────────────────────────────────────────────────────────────
 function SeoRow({ label, keyPrefix, data, onChange, siteUrl }: {
   label: string; keyPrefix: string;
@@ -160,12 +196,13 @@ export default function AdminSettingsPage() {
 
   // Layout tab state
   const [layout, setLayout] = useState<Record<string,string>>({});
+  const [customPages, setCustomPages] = useState<{ page_name: string; slug_ref: string }[]>([]);
 
   // Theme tab state
   const [themeColor, setThemeColor] = useState("rose");
 
   // SEO Files tab state
-  const [seoFiles, setSeoFiles] = useState({ sitemap_xml: "", sitemap_html: "", gsc_filename: "", gsc_content: "", gsc_meta: "" });
+  const [seoFiles, setSeoFiles] = useState({ sitemap_xml: "", sitemap_html: "", gsc_filename: "", gsc_content: "", gsc_meta: "", robots_txt: "" });
   const [generating, setGenerating] = useState(false);
   const [sitemapStats, setSitemapStats] = useState<{ states: number; cities: number; areas: number; profiles: number; total: number } | null>(null);
 
@@ -190,6 +227,12 @@ export default function AdminSettingsPage() {
         footer_copyright:    data.footer_copyright    ?? settings.footer_copyright,
         footer_links:        data.footer_links        ?? settings.footer_links,
         footer_contact_email:data.footer_contact_email?? settings.footer_contact_email,
+        footer_link_groups: data.footer_link_groups || JSON.stringify(parseFooterGroups("", data.footer_links)),
+        footer_logo_url: data.footer_logo_url ?? "",
+        footer_bg_color: data.footer_bg_color ?? "#80165d",
+        footer_badge_image_url: data.footer_badge_image_url ?? "",
+        footer_badge_link_url: data.footer_badge_link_url ?? "",
+        footer_badge_alt: data.footer_badge_alt ?? "Restricted to Adults",
         og_image_url:        data.og_image_url        ?? settings.og_image_url,
         site_name:           data.site_name           ?? settings.site_name,
         site_tagline:        data.site_tagline        ?? settings.site_tagline,
@@ -202,6 +245,9 @@ export default function AdminSettingsPage() {
     setAdminEmail(user.email || "");
 
     api.getLocations().then(setLocations).catch(() => {});
+    api.adminGetAllPages()
+      .then((pages: any[]) => setCustomPages(pages.filter(page => page.page_type === "custom")))
+      .catch(() => {});
     api.adminGetSeoFiles().then((d: any) => setSeoFiles(prev => ({ ...prev, ...d }))).catch(() => {});
     loadUsers();
   }, [user]);
@@ -255,10 +301,13 @@ export default function AdminSettingsPage() {
     finally { setSaving(false); }
   };
 
+  const [robotsChanged, setRobotsChanged] = useState(false);
   const saveSeoFiles = async () => {
     setSaving(true);
     try {
-      await api.adminSaveSeoFiles(seoFiles);
+      const { robots_txt, ...otherFiles } = seoFiles;
+      await api.adminSaveSeoFiles(robotsChanged ? { ...otherFiles, robots_txt } : otherFiles);
+      setRobotsChanged(false);
       refreshSettings();
       toast.success("SEO files saved and published");
     } catch (err: any) { toast.error(err.message); }
@@ -303,6 +352,10 @@ export default function AdminSettingsPage() {
   const areas   = locations.map(l => ({ slug: l.area_slug, label: `${l.area} (${l.city})` })).filter(x => x.slug);
 
   const onSeoChange = (k: string, v: string) => setSeoData(prev => ({ ...prev, [k]: v }));
+  const footerGroups = parseFooterGroups(layout.footer_link_groups ?? "", layout.footer_links ?? "[]");
+  const updateFooterGroups = (groups: FooterLinkGroup[]) => {
+    setLayout(current => ({ ...current, footer_link_groups: JSON.stringify(groups) }));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -481,6 +534,37 @@ export default function AdminSettingsPage() {
                   )}
                 </div>
 
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Robots.txt</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <label htmlFor="robots-content" className="text-sm font-medium text-gray-700">robots.txt content</label>
+                      <a href="/robots.txt" target="_blank" rel="noopener noreferrer" className="text-xs text-rose-600 hover:underline">View /robots.txt</a>
+                    </div>
+                    <p className="text-xs text-gray-500">Upload robots.txt or paste its contents below, then click Save SEO Files to publish.</p>
+                    <label className="block text-sm text-gray-700">Upload robots.txt
+                      <input type="file" accept=".txt,text/plain" disabled={saving} className="mt-2 block w-full text-sm" onChange={async event => {
+                        const file = event.target.files?.[0];
+                        event.target.value = "";
+                        if (!file) return;
+                        if (file.name.toLowerCase() !== "robots.txt" || file.size > 500000) {
+                          toast.error("Choose a robots.txt file up to 500 KB"); return;
+                        }
+                        try {
+                          const content = (await file.text()).replace(/^\uFEFF/, "");
+                          if (content.includes("\0")) throw new Error("Choose a plain-text robots.txt file");
+                          setSeoFiles(value => ({ ...value, robots_txt: content }));
+                          setRobotsChanged(true);
+                          toast.success("robots.txt loaded. Save SEO Files to publish.");
+                        } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to read file"); }
+                      }} />
+                    </label>
+                    <textarea id="robots-content" rows={8} value={seoFiles.robots_txt ?? ""}
+                      onChange={event => { setRobotsChanged(true); setSeoFiles(value => ({ ...value, robots_txt: event.target.value })); }}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white" />
+                  </div>
+                </div>
+
                 {/* sitemap.xml */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sitemap XML</p>
@@ -649,6 +733,12 @@ export default function AdminSettingsPage() {
                   <Field label="Default OG / Social Share Image URL">
                     <Input value={layout.og_image_url ?? ""} onChange={(v:string) => setLayout(l => ({...l, og_image_url: v}))} placeholder="https://example.com/og-image.jpg" />
                   </Field>
+                  <Field label="Footer Brand Logo URL" note="Paste the full URL or site path for the logo displayed in the footer. Leave blank to use the default footer logo.">
+                    <Input value={layout.footer_logo_url ?? ""} onChange={(v:string) => setLayout(l => ({...l, footer_logo_url: v}))} placeholder="/logo-footer.svg or https://example.com/logo.png" />
+                  </Field>
+                  <Field label="Footer Background Color">
+                    <Input type="color" value={layout.footer_bg_color ?? "#80165d"} onChange={(v:string) => setLayout(l => ({...l, footer_bg_color: v}))} />
+                  </Field>
                 </div>
 
                 <hr className="border-gray-100" />
@@ -675,10 +765,66 @@ export default function AdminSettingsPage() {
                       <Input value={layout.footer_copyright ?? ""} onChange={(v:string) => setLayout(l => ({...l, footer_copyright: v}))} placeholder="© 2025 EliteEscorts" />
                     </Field>
                   </div>
-                  <Field label="Footer Quick Links (JSON)" note={`Array of {label, href} objects. e.g. [{"label":"Browse","href":"/escorts"}]`}>
-                    <Textarea value={layout.footer_links ?? "[]"} onChange={(v:string) => setLayout(l => ({...l, footer_links: v}))} rows={4}
-                      placeholder={`[{"label":"Browse Escorts","href":"/escorts"},{"label":"Tamil Nadu","href":"/tamilnadu"}]`} />
-                  </Field>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Field label="Footer Badge Image URL" note="Optional small logo/badge shown below the last link group.">
+                      <Input value={layout.footer_badge_image_url ?? ""} onChange={(v:string) => setLayout(l => ({...l, footer_badge_image_url: v}))} placeholder="/rta-badge.png or https://example.com/badge.png" />
+                    </Field>
+                    <Field label="Footer Badge Link URL">
+                      <Input value={layout.footer_badge_link_url ?? ""} onChange={(v:string) => setLayout(l => ({...l, footer_badge_link_url: v}))} placeholder="https://example.com/" />
+                    </Field>
+                    <Field label="Footer Badge Alt Text">
+                      <Input value={layout.footer_badge_alt ?? ""} onChange={(v:string) => setLayout(l => ({...l, footer_badge_alt: v}))} placeholder="Restricted to Adults" />
+                    </Field>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">Footer Link Groups</p>
+                        <p className="text-xs text-gray-400">Manage column headings and links. Create pages in Page SEO Content, then add them to a group here.</p>
+                      </div>
+                      <button type="button" onClick={() => updateFooterGroups([...footerGroups, { heading: "NEW LINKS", links: [] }])}
+                        className="shrink-0 rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">
+                        Add Group
+                      </button>
+                    </div>
+                    {footerGroups.map((group, groupIndex) => (
+                      <div key={groupIndex} className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <div className="flex items-center gap-2">
+                          <Input value={group.heading} onChange={(heading: string) => updateFooterGroups(footerGroups.map((item, index) => index === groupIndex ? { ...item, heading } : item))} placeholder="Column heading" />
+                          <button type="button" aria-label={`Remove ${group.heading} footer group`} onClick={() => updateFooterGroups(footerGroups.filter((_, index) => index !== groupIndex))}
+                            className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>
+                        </div>
+                        {group.links.map((link, linkIndex) => (
+                          <div key={linkIndex} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                            <Input value={link.label} onChange={(label: string) => updateFooterGroups(footerGroups.map((item, index) => index === groupIndex ? { ...item, links: item.links.map((entry, i) => i === linkIndex ? { ...entry, label } : entry) } : item))} placeholder="Link label" />
+                            <Input value={link.href} onChange={(href: string) => updateFooterGroups(footerGroups.map((item, index) => index === groupIndex ? { ...item, links: item.links.map((entry, i) => i === linkIndex ? { ...entry, href } : entry) } : item))} placeholder="/page-url or https://…" />
+                            <button type="button" aria-label={`Remove ${link.label} footer link`} onClick={() => updateFooterGroups(footerGroups.map((item, index) => index === groupIndex ? { ...item, links: item.links.filter((_, i) => i !== linkIndex) } : item))}
+                              className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>
+                          </div>
+                        ))}
+                        <div className="flex flex-wrap gap-2">
+                          <button type="button" onClick={() => updateFooterGroups(footerGroups.map((item, index) => index === groupIndex ? { ...item, links: [...item.links, { label: "", href: "" }] } : item))}
+                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 hover:border-rose-300">
+                            Add Link
+                          </button>
+                          {customPages.length > 0 && (
+                            <select defaultValue="" aria-label={`Add a created page to ${group.heading}`} onChange={event => {
+                              const page = customPages.find(item => item.slug_ref === event.target.value);
+                              if (!page) return;
+                              updateFooterGroups(footerGroups.map((item, index) => index === groupIndex ? {
+                                ...item,
+                                links: [...item.links, { label: page.page_name, href: `/pages/${page.slug_ref}` }],
+                              } : item));
+                              event.target.value = "";
+                            }} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
+                              <option value="">Add created page…</option>
+                              {customPages.map(page => <option key={page.slug_ref} value={page.slug_ref}>{page.page_name}</option>)}
+                            </select>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-2">

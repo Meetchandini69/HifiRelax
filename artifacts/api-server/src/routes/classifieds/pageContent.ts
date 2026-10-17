@@ -83,13 +83,38 @@ pageContentRouter.get("/admin/all-pages", requireAuth, requireAdmin, async (_req
     });
   }
 
+  const customPages = await pool.query(
+    `SELECT page_key, page_type, page_name, slug_ref, content_heading, faq_json
+     FROM ec_page_content WHERE page_type='custom' ORDER BY page_name`
+  );
+  for (const page of customPages.rows) {
+    pages.push({
+      ...page,
+      has_content: true,
+      faq_count: (page.faq_json || []).length,
+    });
+  }
+
   res.json(pages);
 });
 
 // ── Admin: upsert page content ───────────────────────────────────────────────
 pageContentRouter.post("/admin/upsert", requireAuth, requireAdmin, async (req, res) => {
   const { page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json, featured_profile_ids, featured_profile_count } = req.body;
-  if (!page_key) return res.status(400).json({ error: "page_key required" });
+  if (!page_key) {
+    res.status(400).json({ error: "page_key required" });
+    return;
+  }
+  if (page_type === "custom" && (
+    typeof slug_ref !== "string" ||
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug_ref) ||
+    page_key !== `custom_${slug_ref}` ||
+    typeof page_name !== "string" ||
+    !page_name.trim()
+  )) {
+    res.status(400).json({ error: "Custom pages need a title and a valid lowercase URL slug" });
+    return;
+  }
 
   const r = await pool.query(
     `INSERT INTO ec_page_content (page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json, featured_profile_ids, featured_profile_count, updated_at)

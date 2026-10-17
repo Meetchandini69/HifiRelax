@@ -11,7 +11,13 @@ export interface SiteSettings {
   footer_about: string;
   footer_copyright: string;
   footer_links: string;
+  footer_link_groups: string;
   footer_contact_email: string;
+  footer_logo_url: string;
+  footer_bg_color: string;
+  footer_badge_image_url: string;
+  footer_badge_link_url: string;
+  footer_badge_alt: string;
   theme_color: string;
   og_image_url: string;
   gsc_meta: string;
@@ -28,7 +34,13 @@ const defaults: SiteSettings = {
   footer_about: "EliteEscorts is India's trusted platform for independent escort listings.",
   footer_copyright: "© 2025 EliteEscorts. All rights reserved.",
   footer_links: "[]",
+  footer_link_groups: "",
   footer_contact_email: "",
+  footer_logo_url: "",
+  footer_bg_color: "#80165d",
+  footer_badge_image_url: "",
+  footer_badge_link_url: "",
+  footer_badge_alt: "Restricted to Adults",
   theme_color: "rose",
   og_image_url: "",
   gsc_meta: "",

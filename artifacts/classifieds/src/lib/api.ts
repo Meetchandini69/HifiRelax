@@ -1,6 +1,8 @@
 // VITE_API_URL — set this for Cloudflare Pages / external deployments
 // e.g. VITE_API_URL=https://api.yourdomain.com
 // Leave unset for local dev (uses Vite proxy to localhost:8080)
+import type { BlogInput, BlogPost, BlogSummary } from "./blog";
+
 const API = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
   : `${import.meta.env.BASE_URL.replace(/\/$/, "")}/api`;
@@ -24,6 +26,15 @@ async function request(url: string, options: RequestInit = {}) {
 }
 
 export const api = {
+  getBlogPosts: (limit = 12, offset = 0): Promise<{ posts: BlogSummary[]; hasMore: boolean }> =>
+    request(`${API}/classifieds/blog?limit=${limit}&offset=${offset}`),
+  getBlogPost: (slug: string): Promise<BlogPost> => request(`${API}/classifieds/blog/${encodeURIComponent(slug)}`),
+  adminGetBlogPosts: (): Promise<BlogPost[]> => request(`${API}/classifieds/blog/admin`),
+  adminCreateBlogPost: (body: BlogInput): Promise<BlogPost> =>
+    request(`${API}/classifieds/blog/admin`, { method: "POST", body: JSON.stringify(body) }),
+  adminUpdateBlogPost: (id: number, body: BlogInput): Promise<BlogPost> =>
+    request(`${API}/classifieds/blog/admin/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  adminDeleteBlogPost: (id: number) => request(`${API}/classifieds/blog/admin/${id}`, { method: "DELETE" }),
   // Auth
   register: (body: { email: string; password: string; name: string }) =>
     request(`${API}/classifieds/auth/register`, { method: "POST", body: JSON.stringify(body) }),
@@ -143,6 +154,8 @@ export const api = {
   // Page Content (admin)
   adminGetPageContentList: () => request(`${API}/classifieds/page-content/admin/list`),
   adminGetAllPages: () => request(`${API}/classifieds/page-content/admin/all-pages`),
+  getCustomPage: (slug: string) =>
+    request(`${API}/classifieds/page-content?page_key=${encodeURIComponent(`custom_${slug}`)}`),
   adminUpsertPageContent: (body: object) =>
     request(`${API}/classifieds/page-content/admin/upsert`, { method: "POST", body: JSON.stringify(body) }),
   adminDeletePageContent: (id: number) =>

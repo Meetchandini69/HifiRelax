@@ -107,6 +107,33 @@ describe("POST /api/classifieds/page-content/admin/upsert", () => {
     const call = mockQuery.mock.calls[0];
     expect(call[1]).toContain("[]");
   });
+
+  it("rejects custom pages with invalid URL slugs", async () => {
+    const res = await request(app)
+      .post("/api/classifieds/page-content/admin/upsert")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({ page_key: "custom_Privacy", page_type: "custom", page_name: "Privacy", slug_ref: "Privacy" });
+    expect(res.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it("creates a custom page with a valid slug", async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [{ id: 7, page_key: "custom_privacy-policy", page_type: "custom", page_name: "Privacy Policy", slug_ref: "privacy-policy" }],
+    } as any);
+    const res = await request(app)
+      .post("/api/classifieds/page-content/admin/upsert")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        page_key: "custom_privacy-policy",
+        page_type: "custom",
+        page_name: "Privacy Policy",
+        slug_ref: "privacy-policy",
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.slug_ref).toBe("privacy-policy");
+    expect(mockQuery.mock.calls[0][1]).toContain("custom_privacy-policy");
+  });
 });
 
 describe("GET /api/classifieds/page-content/admin/list", () => {
@@ -127,6 +154,26 @@ describe("GET /api/classifieds/page-content/admin/list", () => {
       .set("Authorization", `Bearer ${adminToken()}`);
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(2);
+  });
+});
+
+describe("GET /api/classifieds/page-content/admin/all-pages", () => {
+  it("includes custom pages for the footer page picker", async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] } as any)
+      .mockResolvedValueOnce({ rows: [] } as any)
+      .mockResolvedValueOnce({
+        rows: [{ page_key: "custom_privacy-policy", page_type: "custom", page_name: "Privacy Policy", slug_ref: "privacy-policy", faq_json: [] }],
+      } as any);
+    const res = await request(app)
+      .get("/api/classifieds/page-content/admin/all-pages")
+      .set("Authorization", `Bearer ${adminToken()}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toContainEqual(expect.objectContaining({
+      page_type: "custom",
+      page_name: "Privacy Policy",
+      slug_ref: "privacy-policy",
+    }));
   });
 });
 

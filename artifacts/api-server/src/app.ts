@@ -3,6 +3,7 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import { resolve } from "path";
 import router from "./routes";
+import { robotsRouter } from "./routes/robots.js";
 import { logger } from "./lib/logger";
 import { distExists, getDistDir, renderWithMeta } from "./lib/seoRenderer.js";
 
@@ -39,6 +40,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api", router);
+app.use(robotsRouter);
 
 import { pool } from "@workspace/db";
 

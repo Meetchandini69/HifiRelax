@@ -156,3 +156,20 @@ CREATE INDEX IF NOT EXISTS idx_profiles_boost_app    ON ec_profiles(boost_approv
 CREATE INDEX IF NOT EXISTS idx_locations_area_slug   ON ec_locations(area_slug);
 CREATE INDEX IF NOT EXISTS idx_locations_city_slug   ON ec_locations(city_slug);
 CREATE INDEX IF NOT EXISTS idx_page_content_key      ON ec_page_content(page_key);
+
+-- Health, lifestyle and relationship articles. Drafts are never public.
+CREATE TABLE IF NOT EXISTS ec_blog_posts (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  slug VARCHAR(200) NOT NULL UNIQUE,
+  excerpt VARCHAR(500) NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  category VARCHAR(50) NOT NULL CHECK (category IN ('Health', 'Lifestyle', 'Relationships')),
+  cover_image_url VARCHAR(2000) NOT NULL DEFAULT '',
+  status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK ((status = 'published' AND published_at IS NOT NULL) OR (status = 'draft' AND published_at IS NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_blog_published ON ec_blog_posts (published_at DESC, id DESC) WHERE status = 'published';

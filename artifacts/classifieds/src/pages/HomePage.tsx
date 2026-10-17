@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import HomeBlogSection from "@/components/HomeBlogSection";
 import ProfileCard from "@/components/ProfileCard";
 import SearchModal from "@/components/SearchModal";
 import { useSEO } from "@/hooks/useSEO";
@@ -355,6 +356,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      <HomeBlogSection />
       <Footer />
     </div>
   );

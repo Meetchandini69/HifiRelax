@@ -34,7 +34,8 @@ router.get("/public", async (_req, res) => {
     // Only expose safe keys
     const safe = [
       "site_name","site_tagline","site_url","header_logo_text","header_phone","header_announcement",
-      "footer_about","footer_copyright","footer_links","footer_contact_email",
+      "footer_about","footer_copyright","footer_links","footer_link_groups","footer_contact_email",
+      "footer_logo_url","footer_bg_color","footer_badge_image_url","footer_badge_link_url","footer_badge_alt",
       "theme_color","og_image_url","watermark_text","gsc_meta",
     ];
     // Also expose all seo_* keys
@@ -144,7 +145,7 @@ function getPublicDir(): string {
 // Admin: get SEO files content
 router.get("/seo-files", requireAdmin as any, async (_req, res) => {
   try {
-    const keys = ["sitemap_xml", "sitemap_html", "gsc_filename", "gsc_content", "gsc_meta"];
+    const keys = ["sitemap_xml", "sitemap_html", "gsc_filename", "gsc_content", "gsc_meta", "robots_txt"];
     const r = await pool.query(
       `SELECT key, value FROM ec_settings WHERE key = ANY($1)`,
       [keys]
@@ -159,6 +160,11 @@ router.get("/seo-files", requireAdmin as any, async (_req, res) => {
 
 // Admin: save SEO files content — writes to DB + public folder
 router.post("/seo-files", requireAdmin as any, async (req, res) => {
+  const robots = req.body.robots_txt;
+  if (robots !== undefined && (typeof robots !== "string" || Buffer.byteLength(robots, "utf8") > 500000 || robots.includes("\0"))) {
+    res.status(400).json({ error: "robots.txt must be plain text up to 500 KB without null characters" });
+    return;
+  }
   const { sitemap_xml, sitemap_html, gsc_filename, gsc_content, gsc_meta } = req.body as Record<string, string>;
   try {
     const publicDir = getPublicDir();
@@ -175,6 +181,7 @@ router.post("/seo-files", requireAdmin as any, async (req, res) => {
     for (const [key, value] of entries) {
       await setSetting(key, value);
     }
+    if (robots !== undefined) await setSetting("robots_txt", robots.replace(/^\uFEFF/, ""));
 
     // Write sitemap.xml
     if (sitemap_xml?.trim()) {

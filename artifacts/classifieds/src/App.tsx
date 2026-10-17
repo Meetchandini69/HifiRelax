@@ -5,6 +5,10 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { Toaster } from "sonner";
 
 import HomePage from "@/pages/HomePage";
+import BlogPage from "@/pages/BlogPage";
+import BlogPostPage from "@/pages/BlogPostPage";
+import CustomPage from "@/pages/CustomPage";
+import AdminBlogPage from "@/pages/admin/AdminBlogPage";
 import ListingsPage from "@/pages/ListingsPage";
 import LocationPage from "@/pages/LocationPage";
 import StatePage from "@/pages/StatePage";
@@ -31,6 +35,10 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
+      <Route path="/blog" component={BlogPage} />
+      <Route path="/blog/:slug" component={BlogPostPage} />
+      <Route path="/pages/:slug" component={CustomPage} />
+      <Route path="/admin/blog" component={AdminBlogPage} />
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/dashboard" component={DashboardPage} />

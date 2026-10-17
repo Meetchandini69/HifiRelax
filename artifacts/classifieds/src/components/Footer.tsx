@@ -3,73 +3,115 @@ import { Mail } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 
+interface FooterLink {
+  label: string;
+  href: string;
+}
+
+interface FooterLinkGroup {
+  heading: string;
+  links: FooterLink[];
+}
+
+const DEFAULT_LINK_GROUPS: FooterLinkGroup[] = [
+  { heading: "HELP / INFO", links: [] },
+  { heading: "USEFUL LINKS", links: [] },
+];
+
+function isSafeHref(href: string) {
+  return href.startsWith("/") && !href.startsWith("//") ||
+    /^(https?:|mailto:|tel:)/i.test(href);
+}
+
 export default function Footer() {
   const { settings } = useSettings();
   const logoText   = settings.header_logo_text || settings.site_name || "EliteEscorts";
   const about      = settings.footer_about || "";
   const copyright  = settings.footer_copyright || `© ${new Date().getFullYear()} ${logoText}`;
   const email      = settings.footer_contact_email || "";
-  const primary    = "var(--ec-primary, #e11d48)";
+  const logoUrl    = settings.footer_logo_url || "/logo-footer.svg";
+  const badgeUrl   = settings.footer_badge_image_url || "";
+  const badgeAlt   = settings.footer_badge_alt || "Footer badge";
+  const footerColor = /^#[0-9a-f]{6}$/i.test(settings.footer_bg_color || "") ? settings.footer_bg_color : "#80165d";
 
-  let links: { label: string; href: string }[] = [];
-  try { links = JSON.parse(settings.footer_links || "[]"); } catch {}
+  let linkGroups: FooterLinkGroup[] = DEFAULT_LINK_GROUPS;
+  let hasConfiguredGroups = false;
+  try {
+    const configured = JSON.parse(settings.footer_link_groups || "null");
+    if (Array.isArray(configured)) {
+      linkGroups = configured
+        .filter(group => group && typeof group.heading === "string" && Array.isArray(group.links))
+        .map(group => ({
+          heading: group.heading,
+          links: group.links.filter((link: FooterLink) =>
+            link && typeof link.label === "string" && typeof link.href === "string" && isSafeHref(link.href)
+          ),
+        }));
+      hasConfiguredGroups = true;
+    }
+  } catch {}
+  if (!hasConfiguredGroups) {
+    try {
+      const legacyLinks = JSON.parse(settings.footer_links || "[]");
+      if (Array.isArray(legacyLinks) && legacyLinks.length) {
+        linkGroups = [{
+          heading: "Quick Links",
+          links: legacyLinks.filter((link: FooterLink) =>
+            link && typeof link.label === "string" && typeof link.href === "string" && isSafeHref(link.href)
+          ),
+        }];
+      }
+    } catch {}
+  }
 
   return (
-    <footer className="bg-gray-900 text-gray-400 mt-16">
+    <footer className="text-gray-100 mt-16" style={{ backgroundColor: footerColor }}>
       <DisclaimerBanner />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
-          {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center overflow-hidden">
-                <img src="/logo-footer.svg" alt={logoText} className="w-full h-full object-contain" />
-              </div>
-              <span className="font-bold text-white text-sm">{logoText}</span>
-            </div>
-            {about && <p className="text-xs leading-relaxed text-gray-500">{about}</p>}
-            {email && (
-              <a href={`mailto:${email}`} className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                <Mail size={12} /> {email}
-              </a>
-            )}
-          </div>
-
-          {/* Quick Links */}
-          {links.length > 0 && (
-            <div>
-              <h4 className="text-white text-sm font-semibold mb-3">Quick Links</h4>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          {linkGroups.map((group, groupIndex) => (
+            <div key={`${group.heading}-${groupIndex}`}>
+              <h4 className="text-white text-sm font-bold mb-3">{group.heading}</h4>
               <ul className="space-y-2">
-                {links.map((link, i) => (
-                  <li key={i}>
-                    <Link href={link.href} className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
-                      {link.label}
-                    </Link>
+                {group.links.map((link, linkIndex) => (
+                  <li key={`${link.href}-${linkIndex}`}>
+                    {link.href.startsWith("/") ? (
+                      <Link href={link.href} className="text-sm text-white/90 hover:text-white transition-colors">{link.label}</Link>
+                    ) : (
+                      <a href={link.href} className="text-sm text-white/90 hover:text-white transition-colors">{link.label}</a>
+                    )}
                   </li>
                 ))}
               </ul>
+              {groupIndex === linkGroups.length - 1 && badgeUrl && (
+                settings.footer_badge_link_url && isSafeHref(settings.footer_badge_link_url) ? (
+                  <a href={isSafeHref(settings.footer_badge_link_url) ? settings.footer_badge_link_url : undefined} className="mt-4 inline-block" aria-label={badgeAlt}>
+                    <img src={badgeUrl} alt={badgeAlt} className="max-h-14 max-w-36 object-contain" />
+                  </a>
+                ) : (
+                  <span className="mt-4 inline-block">
+                    <img src={badgeUrl} alt={badgeAlt} className="max-h-14 max-w-36 object-contain" />
+                  </span>
+                )
+              )}
             </div>
-          )}
-
-          {/* Disclaimer */}
-          <div>
-            <h4 className="text-white text-sm font-semibold mb-3">Disclaimer</h4>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              All persons listed are 18+ adults. Listings are provided for entertainment
-              purposes only. We do not endorse or facilitate any illegal activity.
-              By using this site you agree to our terms.
-            </p>
-          </div>
+          ))}
         </div>
 
-        <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-gray-600">{copyright}</p>
-          <div className="flex gap-4 text-xs text-gray-600">
-            <span>Adults Only (18+)</span>
-            <span>·</span>
-            <span>All profiles verified</span>
+        {(logoUrl || about || email || copyright) && (
+          <div className="border-t border-white/20 mt-7 pt-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {logoUrl && <img src={logoUrl} alt={logoText} className="max-h-8 max-w-36 object-contain" />}
+              {about && <p className="text-xs leading-relaxed text-white/80">{about}</p>}
+              {email && (
+                <a href={`mailto:${email}`} className="flex items-center gap-1.5 text-xs text-white/90 hover:text-white transition-colors">
+                  <Mail size={12} /> {email}
+                </a>
+              )}
+            </div>
+            <p className="text-xs text-white/80">{copyright}</p>
           </div>
-        </div>
+        )}
       </div>
     </footer>
   );

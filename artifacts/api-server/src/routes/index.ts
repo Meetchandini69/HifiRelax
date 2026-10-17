@@ -6,6 +6,7 @@ import { profilesRouter } from "./classifieds/profiles.js";
 import { settingsRouter } from "./classifieds/settings.js";
 import { boostsRouter } from "./classifieds/boosts.js";
 import { pageContentRouter } from "./classifieds/pageContent.js";
+import { blogRouter } from "./classifieds/blog.js";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use("/classifieds/profiles", profilesRouter);
 router.use("/classifieds/settings", settingsRouter);
 router.use("/classifieds/boosts", boostsRouter);
 router.use("/classifieds/page-content", pageContentRouter);
+router.use("/classifieds/blog", blogRouter);
 
 export default router;

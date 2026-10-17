@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { LayoutDashboard, FileText, MapPin, Settings, Zap, BookOpen, Users } from "lucide-react";
 
 const TABS = [
+  { href: "/admin/blog",           label: "Blog",         icon: BookOpen },
   { href: "/admin",                label: "Overview",     icon: LayoutDashboard },
   { href: "/admin/profiles",       label: "Listings",     icon: FileText },
   { href: "/admin/users",          label: "Users",        icon: Users },

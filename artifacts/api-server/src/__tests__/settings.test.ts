@@ -29,6 +29,9 @@ describe("GET /api/classifieds/settings/public", () => {
         { key: "seo_home_title", value: "Best Escorts TN" },
         { key: "admin_email", value: "admin@secret.com" },
         { key: "theme_color", value: "#e11d48" },
+        { key: "footer_link_groups", value: "[]" },
+        { key: "footer_logo_url", value: "/footer-logo.svg" },
+        { key: "footer_badge_image_url", value: "/adult-badge.png" },
       ],
     } as any);
     const res = await request(app).get("/api/classifieds/settings/public");
@@ -37,6 +40,9 @@ describe("GET /api/classifieds/settings/public", () => {
     expect(res.body.watermark_text).toBe("EliteEscorts.in");
     expect(res.body.seo_home_title).toBe("Best Escorts TN");
     expect(res.body.theme_color).toBe("#e11d48");
+    expect(res.body.footer_link_groups).toBe("[]");
+    expect(res.body.footer_logo_url).toBe("/footer-logo.svg");
+    expect(res.body.footer_badge_image_url).toBe("/adult-badge.png");
     expect(res.body.admin_email).toBeUndefined();
   });
 

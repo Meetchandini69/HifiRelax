@@ -51,6 +51,7 @@ const TYPE_ICONS: Record<string, any> = {
   state: Globe,
   city: Building2,
   area: MapPin,
+  custom: FileText,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -58,6 +59,7 @@ const TYPE_LABELS: Record<string, string> = {
   state: "State",
   city: "City",
   area: "Area",
+  custom: "Custom Page",
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -365,6 +367,10 @@ export default function AdminPageContentPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [editing, setEditing] = useState<EditState | null>(null);
+  const [showCreatePage, setShowCreatePage] = useState(false);
+  const [newPageName, setNewPageName] = useState("");
+  const [newPageSlug, setNewPageSlug] = useState("");
+  const [creatingPage, setCreatingPage] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -405,6 +411,48 @@ export default function AdminPageContentPage() {
     });
   };
 
+  const createCustomPage = async () => {
+    const title = newPageName.trim();
+    const slug = newPageSlug.trim().toLowerCase();
+    if (!title || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return;
+    const pageKey = `custom_${slug}`;
+    if (pages.some(page => page.page_key === pageKey)) {
+      window.alert("A page with this URL already exists.");
+      return;
+    }
+
+    setCreatingPage(true);
+    try {
+      await api.adminUpsertPageContent({
+        page_key: pageKey,
+        page_type: "custom",
+        page_name: title,
+        slug_ref: slug,
+        content_heading: title,
+        content_html: "",
+        content_sections: [],
+        faq_json: [],
+      });
+      setShowCreatePage(false);
+      setNewPageName("");
+      setNewPageSlug("");
+      await load();
+      await openEditor({
+        page_key: pageKey,
+        page_type: "custom",
+        page_name: title,
+        slug_ref: slug,
+        has_content: true,
+        content_heading: title,
+        faq_count: 0,
+      });
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Unable to create page.");
+    } finally {
+      setCreatingPage(false);
+    }
+  };
+
   const filtered = pages.filter(p => {
     const matchType = typeFilter === "all" || p.page_type === typeFilter;
     const matchSearch = !search || p.page_name.toLowerCase().includes(search.toLowerCase()) || p.page_key.toLowerCase().includes(search.toLowerCase());
@@ -440,11 +488,40 @@ export default function AdminPageContentPage() {
           </div>
           <div className="flex items-center gap-4 text-sm">
             <span className="text-gray-500"><strong className="text-gray-900">{stats.withContent}</strong> / {stats.total} pages with content</span>
+            <button onClick={() => setShowCreatePage(value => !value)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">
+              <Plus size={14} /> Create Page
+            </button>
           </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
+        {showCreatePage && (
+          <div className="rounded-xl border border-rose-200 bg-white p-5">
+            <h2 className="text-sm font-bold text-gray-900">Create a custom page</h2>
+            <p className="mt-1 text-xs text-gray-500">For example, create a privacy policy at <code>/pages/privacy-policy</code>, then add it to a footer group in Settings.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+              <label className="text-xs font-medium text-gray-600">
+                Page title
+                <input value={newPageName} onChange={event => {
+                  const title = event.target.value;
+                  setNewPageName(title);
+                  setNewPageSlug(current => current || title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+                }} placeholder="Privacy Policy" className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+              </label>
+              <label className="text-xs font-medium text-gray-600">
+                URL slug
+                <input value={newPageSlug} onChange={event => setNewPageSlug(event.target.value.toLowerCase())} placeholder="privacy-policy" className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+              </label>
+              <button disabled={creatingPage || !newPageName.trim() || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(newPageSlug)}
+                onClick={createCustomPage} className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                {creatingPage ? "Creating…" : "Create and Edit"}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-400">Use lowercase letters, numbers, and hyphens in the URL slug.</p>
+          </div>
+        )}
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -457,7 +534,7 @@ export default function AdminPageContentPage() {
             />
           </div>
           <div className="flex gap-2 flex-wrap">
-            {["all", "listings", "state", "city", "area"].map(t => (
+            {["all", "listings", "state", "city", "area", "custom"].map(t => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}

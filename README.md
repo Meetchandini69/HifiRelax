@@ -190,6 +190,15 @@ workspace/
 | `ec_boost_requests` | User boost purchase requests |
 | `ec_settings` | Key-value site settings |
 | `ec_page_content` | Admin-managed SEO content + FAQs per page |
+| `ec_blog_posts` | Health, lifestyle and relationship articles with draft/published status |
+
+### Blog management
+
+Open **Admin → Blog** (`/admin/blog`) to create, preview, edit, publish, unpublish or delete articles. Fields include title, unique URL slug, category, summary, optional HTTP(S) cover image URL and plain-text article content. Paragraph breaks are preserved. Set the status to **Published** and save to make an article public; saving as **Draft** removes it from public pages.
+
+The desktop/mobile **Blog** menu opens `/blog`. The homepage displays the three most recently published articles above the footer, and hides the section when there are no published articles. Public article URLs use `/blog/:slug`; drafts return 404. The blog index paginates in groups of 12.
+
+The blog table is created by the existing `schema/schema.sql` startup migration. Restart the API after deploying this change (or apply that schema using the existing database setup command). No sample articles are automatically published.
 
 ---
 

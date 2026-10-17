@@ -38,6 +38,7 @@ export default function Navbar() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-6 text-sm">
+              <Link href="/blog" className="text-gray-600 hover:text-rose-600 transition-colors">Blog</Link>
               <Link href="/escorts" className="text-gray-600 hover:text-rose-600 transition-colors">Browse Independent Escorts</Link>
               {phone && (
                 <a href={`tel:${phone}`} className="flex items-center gap-1 text-gray-500 text-xs hover:text-gray-700 transition-colors">
@@ -96,6 +97,7 @@ export default function Navbar() {
         {open && (
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="flex flex-col p-4 gap-1 text-sm">
+              <Link href="/blog" onClick={() => setOpen(false)} className="text-left text-gray-700 hover:text-rose-600 px-3 py-2 rounded-lg hover:bg-gray-50">Blog</Link>
               <button onClick={() => { setSearchOpen(true); setOpen(false); }} className="text-left text-gray-700 hover:text-rose-600 px-3 py-2 rounded-lg hover:bg-gray-50 flex items-center gap-2">
                 <Search size={14} /> Search by Location
               </button>

@@ -200,6 +200,26 @@ async function resolveMetaForPath(
     title, description, canonical, ogImage, robots, siteName,
   });
 
+  if (path === "/blog") {
+    return meta(`Health, Lifestyle & Relationships Blog | ${siteName}`, "Articles about wellbeing, everyday lifestyle and building stronger relationships.");
+  }
+  const blogMatch = path.match(/^\/blog\/([^/]+)$/);
+  if (blogMatch) {
+    try {
+      const result = await pool.query(
+        "SELECT title, excerpt, cover_image_url FROM ec_blog_posts WHERE slug=$1 AND status='published'",
+        [blogMatch[1]],
+      );
+      if (result.rows[0]) {
+        const post = result.rows[0];
+        return { ...meta(`${post.title} | ${siteName}`, post.excerpt || "Health, lifestyle and relationship articles."), ogImage: post.cover_image_url || ogImage };
+      }
+    } catch (error) {
+      logger.warn({ error }, "seoRenderer: blog query failed");
+    }
+    return { ...meta(`Article unavailable | ${siteName}`, "This article is not available."), robots: "noindex, nofollow" };
+  }
+
   // ── / (Home) ────────────────────────────────────────────────────────────
   if (path === "/") {
     return meta(
