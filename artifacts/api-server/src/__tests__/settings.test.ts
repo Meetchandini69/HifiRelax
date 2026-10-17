@@ -114,6 +114,28 @@ describe("PUT /api/classifieds/settings (admin bulk update)", () => {
     expect(res.body.success).toBe(true);
     expect(mockQuery).toHaveBeenCalledTimes(2);
   });
+
+  it("generates sitemap URLs for custom pages and published blog posts", async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ key: "site_url", value: "https://example.com/" }] } as any)
+      .mockResolvedValueOnce({ rows: [{ state: "Tamil Nadu", city: "Chennai", area: "T & Nagar", state_slug: "tamil-nadu", city_slug: "chennai", area_slug: "t-nagar" }] } as any)
+      .mockResolvedValueOnce({ rows: [{ slug: "profile-one", area_slug: "t-nagar" }] } as any)
+      .mockResolvedValueOnce({ rows: [{ page_name: "Privacy & Terms", slug_ref: "privacy-policy" }] } as any)
+      .mockResolvedValueOnce({ rows: [{ title: "A & B", slug: "a-b" }] } as any);
+
+    const res = await request(app)
+      .get("/api/classifieds/settings/generate-sitemap")
+      .set("Authorization", `Bearer ${adminToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.sitemap_xml).toContain("<loc>https://example.com/pages/privacy-policy</loc>");
+    expect(res.body.sitemap_xml).toContain("<loc>https://example.com/blog/a-b</loc>");
+    expect(res.body.sitemap_xml).toContain("https://example.com/escorts/t-nagar/profile-one");
+    expect(res.body.sitemap_xml).not.toMatch(/localhost|yourdomain\.com|<lastmod>/);
+    expect(res.body.sitemap_html).toContain("Privacy &amp; Terms");
+    expect(res.body.stats.customPages).toBe(1);
+    expect(res.body.stats.blogPosts).toBe(1);
+  });
 });
 
 describe("GET /api/classifieds/settings/users (admin list users)", () => {

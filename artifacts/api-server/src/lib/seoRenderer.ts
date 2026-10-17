@@ -26,6 +26,8 @@ interface MetaTags {
   ogImage: string;
   robots: string;
   siteName: string;
+  schema: string;
+  statusCode?: number;
 }
 
 // ─── Settings cache (1 min TTL) ───────────────────────────────────────────────
@@ -118,16 +120,26 @@ function escHtml(s: string): string {
 }
 
 function escAttr(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function injectMetaTags(html: string, m: MetaTags): string {
   let out = html;
   const t   = escHtml(m.title);
+  const ta  = escAttr(m.title);
   const d   = escAttr(m.description);
   const c   = escAttr(m.canonical);
   const img = escAttr(m.ogImage);
   const r   = escAttr(m.robots);
+  let schema = "";
+  if (m.schema.trim()) {
+    try {
+      const json = JSON.stringify(JSON.parse(m.schema)).replace(/</g, "\\u003c");
+      schema = `<script type="application/ld+json" data-seo-schema="1">${json}</script>`;
+    } catch (error) {
+      logger.warn({ error }, "seoRenderer: invalid JSON-LD schema setting");
+    }
+  }
 
   // <title>
   out = out.replace(/<title>[^<]*<\/title>/i, `<title>${t}</title>`);
@@ -151,20 +163,21 @@ function injectMetaTags(html: string, m: MetaTags): string {
   );
 
   // Open Graph
-  out = out.replace(/<meta\s+property="og:title"[^>]*>/i,       `<meta property="og:title" content="${t}" />`);
+  out = out.replace(/<meta\s+property="og:title"[^>]*>/i,       `<meta property="og:title" content="${ta}" />`);
   out = out.replace(/<meta\s+property="og:description"[^>]*>/i,  `<meta property="og:description" content="${d}" />`);
   out = out.replace(/<meta\s+property="og:url"[^>]*>/i,          `<meta property="og:url" content="${c}" />`);
-  out = out.replace(/<meta\s+property="og:site_name"[^>]*>/i,    `<meta property="og:site_name" content="${escHtml(m.siteName)}" />`);
+  out = out.replace(/<meta\s+property="og:site_name"[^>]*>/i,    `<meta property="og:site_name" content="${escAttr(m.siteName)}" />`);
   if (img) {
     out = out.replace(/<meta\s+property="og:image"[^>]*>/i,      `<meta property="og:image" content="${img}" />`);
   }
 
   // Twitter Card
-  out = out.replace(/<meta\s+name="twitter:title"[^>]*>/i,       `<meta name="twitter:title" content="${t}" />`);
+  out = out.replace(/<meta\s+name="twitter:title"[^>]*>/i,       `<meta name="twitter:title" content="${ta}" />`);
   out = out.replace(/<meta\s+name="twitter:description"[^>]*>/i, `<meta name="twitter:description" content="${d}" />`);
   if (img) {
     out = out.replace(/<meta\s+name="twitter:image"[^>]*>/i,     `<meta name="twitter:image" content="${img}" />`);
   }
+  if (schema) out = out.replace(/<\/head>/i, `${schema}</head>`);
 
   return out;
 }
@@ -173,19 +186,55 @@ function injectMetaTags(html: string, m: MetaTags): string {
 
 const PRIVATE_PREFIXES = ["/admin", "/dashboard", "/login", "/register"];
 
+function normalizeSiteUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    return url.origin;
+  } catch {
+    return "";
+  }
+}
+
+function getIndexSiteUrl(html: string): string {
+  const link = html.match(/<link\b[^>]*\brel=["']canonical["'][^>]*>/i)?.[0];
+  const href = link?.match(/\bhref=["']([^"']+)["']/i)?.[1];
+  return href ? normalizeSiteUrl(href) : "";
+}
+
+export async function getPublicSiteUrl(): Promise<string> {
+  const settings = await getSettings();
+  return normalizeSiteUrl(settings.site_url || "") || getIndexSiteUrl(loadIndexHtml() || "");
+}
+
+function textFromHtml(value: string): string {
+  return value
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 async function resolveMetaForPath(
   path: string,
   settings: Record<string, string>,
+  fallbackSiteUrl: string,
 ): Promise<MetaTags> {
   const siteName = settings["site_name"] || "EliteEscorts";
-  const siteUrl  = (settings["site_url"] || "").replace(/\/$/, "");
+  const siteUrl  = normalizeSiteUrl(settings["site_url"] || "") || fallbackSiteUrl;
   const ogImage  = settings["og_image_url"] || "";
 
   const isPrivate = PRIVATE_PREFIXES.some(
     (pfx) => path === pfx || path.startsWith(pfx + "/"),
   );
   const robots    = isPrivate ? "noindex, nofollow" : "index, follow";
-  const canonical = path === "/" ? `${siteUrl}/` : `${siteUrl}${path}`;
+  const canonical = `${siteUrl}${path}`;
 
   // Admin-configurable SEO key overrides stored in ec_settings
   const ovTitle = (key: string) => settings[`seo_${key}_title`] || "";
@@ -196,9 +245,24 @@ async function resolveMetaForPath(
   const md = (base: string, key?: string): string =>
     (key ? ovDesc(key) : "") || base;
 
-  const meta = (title: string, description: string): MetaTags => ({
-    title, description, canonical, ogImage, robots, siteName,
-  });
+  const meta = (title: string, description: string, seoKey?: string): MetaTags => {
+    let canonicalOverride = "";
+    if (seoKey && settings[`seo_${seoKey}_canonical`]) {
+      try {
+        const parsed = new URL(settings[`seo_${seoKey}_canonical`], canonical);
+        if (parsed.protocol === "http:" || parsed.protocol === "https:") canonicalOverride = parsed.href;
+      } catch {}
+    }
+    return {
+      title,
+      description,
+      canonical: canonicalOverride || canonical,
+      ogImage,
+      robots: isPrivate ? "noindex, nofollow" : (seoKey && settings[`seo_${seoKey}_robots`]) || robots,
+      siteName,
+      schema: seoKey ? settings[`seo_${seoKey}_schema`] || "" : "",
+    };
+  };
 
   if (path === "/blog") {
     return meta(`Health, Lifestyle & Relationships Blog | ${siteName}`, "Articles about wellbeing, everyday lifestyle and building stronger relationships.");
@@ -214,10 +278,34 @@ async function resolveMetaForPath(
         const post = result.rows[0];
         return { ...meta(`${post.title} | ${siteName}`, post.excerpt || "Health, lifestyle and relationship articles."), ogImage: post.cover_image_url || ogImage };
       }
+      return { ...meta(`Article not found | ${siteName}`, "This article is not available."), robots: "noindex, nofollow", statusCode: 404 };
     } catch (error) {
       logger.warn({ error }, "seoRenderer: blog query failed");
+      return { ...meta(`Article unavailable | ${siteName}`, "This article is temporarily unavailable."), robots: "noindex, nofollow", statusCode: 503 };
     }
-    return { ...meta(`Article unavailable | ${siteName}`, "This article is not available."), robots: "noindex, nofollow" };
+  }
+
+  const customPageMatch = path.match(/^\/pages\/([a-z0-9]+(?:-[a-z0-9]+)*)$/);
+  if (customPageMatch) {
+    try {
+      const result = await pool.query(
+        "SELECT page_name, content_heading, content_html, content_sections FROM ec_page_content WHERE page_type='custom' AND slug_ref=$1 LIMIT 1",
+        [customPageMatch[1]],
+      );
+      const page = result.rows[0];
+      if (!page) {
+        return { ...meta(`Page not found | ${siteName}`, "This page is not available."), robots: "noindex, nofollow", statusCode: 404 };
+      }
+      const sections = Array.isArray(page.content_sections)
+        ? page.content_sections.map((section: { content_html?: string }) => section.content_html || "").join(" ")
+        : "";
+      const description = textFromHtml(sections || page.content_html || "").slice(0, 160);
+      const seoKey = `custom_${customPageMatch[1]}`;
+      return meta(`${mk(page.page_name, seoKey)} | ${siteName}`, md(description || page.content_heading || page.page_name, seoKey), seoKey);
+    } catch (error) {
+      logger.warn({ error, slug: customPageMatch[1] }, "seoRenderer: custom page query failed");
+      return { ...meta(`Page unavailable | ${siteName}`, "This page is temporarily unavailable."), robots: "noindex, nofollow", statusCode: 503 };
+    }
   }
 
   // ── / (Home) ────────────────────────────────────────────────────────────
@@ -228,14 +316,16 @@ async function resolveMetaForPath(
         "Browse 100% verified independent escort profiles across Tamil Nadu. Chennai, Coimbatore and all major cities. Safe, discreet and trusted.",
         "home",
       ),
+      "home",
     );
   }
 
   // ── /escorts ────────────────────────────────────────────────────────────
   if (path === "/escorts") {
     return meta(
-      `Browse All Escorts | ${siteName}`,
-      `Browse all verified independent escort listings across Tamil Nadu on ${siteName}.`,
+      `${mk("Browse All Escorts in Tamil Nadu", "escorts")} | ${siteName}`,
+      md(`Browse all verified independent escort listings across Tamil Nadu on ${siteName}.`, "escorts"),
+      "escorts",
     );
   }
 
@@ -263,8 +353,10 @@ async function resolveMetaForPath(
           `${p.name}${p.age ? `, ${p.age} yrs,` : ""} independent escort in ${p.area}, ${p.city}, ${p.state}. Services: ${svcs.slice(0, 5).join(", ")}. Contact directly.`,
         );
       }
+      return { ...meta(`Profile not found | ${siteName}`, "This profile is not available."), robots: "noindex, nofollow", statusCode: 404 };
     } catch (err) {
       logger.warn({ err }, `seoRenderer: profile query failed for "${profileSlug}"`);
+      return { ...meta(`Profile unavailable | ${siteName}`, "This profile is temporarily unavailable."), robots: "noindex, nofollow", statusCode: 503 };
     }
   }
 
@@ -287,6 +379,7 @@ async function resolveMetaForPath(
             `Browse verified escort listings in ${c.city}, ${c.state}. Find independent escorts near you. All profiles manually approved.`,
             key,
           ),
+          key,
         );
       }
 
@@ -334,11 +427,18 @@ if (areaR.rows.length > 0) {
       .replaceAll("{state}", a.state)
       .replaceAll("{site_name}", siteName);
 
-    return meta(title, description);
+    const seoKey = `area_${slug}`;
+    return meta(
+      `${mk(title, seoKey)} | ${siteName}`,
+      md(description, seoKey),
+      seoKey,
+    );
 }
     } catch (err) {
       logger.warn({ err }, `seoRenderer: location query failed for "${slug}"`);
+      return { ...meta(`Page unavailable | ${siteName}`, "This page is temporarily unavailable."), robots: "noindex, nofollow", statusCode: 503 };
     }
+    return { ...meta(`Location not found | ${siteName}`, "This location is not available."), robots: "noindex, nofollow", statusCode: 404 };
   }
 
   // ── /:state_slug ─────────────────────────────────────────────────────────
@@ -370,14 +470,40 @@ if (areaR.rows.length > 0) {
             `Find verified escort listings across all cities in ${stateName}. Browse escorts in ${cityList}.`,
             key,
           ),
+          key,
         );
       }
     } catch (err) {
       logger.warn({ err }, `seoRenderer: state query failed for "${stateSlug}"`);
+      return { ...meta(`Page unavailable | ${siteName}`, "This page is temporarily unavailable."), robots: "noindex, nofollow", statusCode: 503 };
     }
+    return { ...meta(`Page not found | ${siteName}`, "This page is not available."), robots: "noindex, nofollow", statusCode: 404 };
   }
 
-  // ── Private pages / fallback ──────────────────────────────────────────────
+  // ── Private and fixed public pages ────────────────────────────────────────
+  const fixedRoutes = new Set([
+    "/",
+    "/escorts",
+    "/blog",
+    "/login",
+    "/register",
+    "/admin",
+    "/dashboard",
+    "/dashboard/post",
+    "/dashboard/settings",
+    "/admin/profiles",
+    "/admin/locations",
+    "/admin/settings",
+    "/admin/boosts",
+    "/admin/page-content",
+    "/admin/users",
+    "/admin/blog",
+  ]);
+  const dynamicPrivateRoute = /^\/dashboard\/boost\/[^/]+$/.test(path);
+  if (!fixedRoutes.has(path) && !dynamicPrivateRoute) {
+    return { ...meta(`Page not found | ${siteName}`, "This page is not available."), robots: "noindex, nofollow", statusCode: 404 };
+  }
+
   return meta(
     siteName,
     "Browse 100% verified independent escort profiles across Tamil Nadu. Chennai, Coimbatore and all major cities. Safe, discreet and trusted.",
@@ -392,13 +518,18 @@ if (areaR.rows.length > 0) {
  *
  * Returns null if the dist directory hasn't been built yet (dev mode).
  */
-export async function renderWithMeta(reqPath: string): Promise<string | null> {
+export async function renderWithMeta(reqPath: string): Promise<{ html: string; statusCode: number; robots: string } | null> {
   const html = loadIndexHtml();
   if (!html) return null;
 
   const path     = reqPath.split("?")[0].replace(/\/+$/, "") || "/";
   const settings = await getSettings();
-  const meta     = await resolveMetaForPath(path, settings);
+  const fallbackSiteUrl = getIndexSiteUrl(html);
+  const meta     = await resolveMetaForPath(path, settings, fallbackSiteUrl);
 
-  return injectMetaTags(html, meta);
+  return {
+    html: injectMetaTags(html, meta),
+    statusCode: meta.statusCode || 200,
+    robots: meta.robots,
+  };
 }

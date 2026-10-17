@@ -202,9 +202,9 @@ export default function AdminSettingsPage() {
   const [themeColor, setThemeColor] = useState("rose");
 
   // SEO Files tab state
-  const [seoFiles, setSeoFiles] = useState({ sitemap_xml: "", sitemap_html: "", gsc_filename: "", gsc_content: "", gsc_meta: "", robots_txt: "" });
+  const [seoFiles, setSeoFiles] = useState({ sitemap_xml: "", sitemap_html: "", sitemap_mode: "manual", gsc_filename: "", gsc_content: "", gsc_meta: "", robots_txt: "" });
   const [generating, setGenerating] = useState(false);
-  const [sitemapStats, setSitemapStats] = useState<{ states: number; cities: number; areas: number; profiles: number; total: number } | null>(null);
+  const [sitemapStats, setSitemapStats] = useState<{ states: number; cities: number; areas: number; profiles: number; customPages: number; blogPosts: number; total: number } | null>(null);
 
   // Users tab state
   const [users, setUsers] = useState<any[]>([]);
@@ -319,7 +319,7 @@ export default function AdminSettingsPage() {
     setSitemapStats(null);
     try {
       const result: any = await api.adminGenerateSitemap();
-      setSeoFiles(f => ({ ...f, sitemap_xml: result.sitemap_xml, sitemap_html: result.sitemap_html }));
+      setSeoFiles(f => ({ ...f, sitemap_xml: result.sitemap_xml, sitemap_html: result.sitemap_html, sitemap_mode: "auto" }));
       setSitemapStats(result.stats);
       toast.success(`Sitemap generated — ${result.stats.total} URLs`);
     } catch (err: any) { toast.error(err.message); }
@@ -524,6 +524,8 @@ export default function AdminSettingsPage() {
                         { label: "Cities",   count: sitemapStats.cities },
                         { label: "Areas",    count: sitemapStats.areas },
                         { label: "Profiles", count: sitemapStats.profiles },
+                        { label: "Pages",    count: sitemapStats.customPages },
+                        { label: "Blog",     count: sitemapStats.blogPosts },
                         { label: "Total URLs", count: sitemapStats.total, highlight: true },
                       ].map(({ label, count, highlight }) => (
                         <span key={label} className={`text-xs font-medium px-2.5 py-1 rounded-full border ${highlight ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-white text-gray-600 border-gray-200"}`}>
@@ -573,11 +575,11 @@ export default function AdminSettingsPage() {
                       <label className="text-sm font-medium text-gray-700">sitemap.xml content</label>
                       <span className="text-xs text-gray-400 bg-white border border-gray-200 rounded px-2 py-0.5 font-mono">served at /sitemap.xml</span>
                     </div>
-                    <p className="text-xs text-gray-400">Auto-generated above, or paste your own. Saved and served at <code>/sitemap.xml</code> on your domain.</p>
+                    <p className="text-xs text-gray-400">Auto-generated above and refreshed from current site data, or paste your own. Saved and served at <code>/sitemap.xml</code> on your domain.</p>
                     <textarea
                       rows={8}
                       value={seoFiles.sitemap_xml}
-                      onChange={e => setSeoFiles(f => ({ ...f, sitemap_xml: e.target.value }))}
+                      onChange={e => setSeoFiles(f => ({ ...f, sitemap_xml: e.target.value, sitemap_mode: "manual" }))}
                       placeholder={`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://yourdomain.com/</loc>\n    <priority>1.0</priority>\n  </url>\n</urlset>`}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white resize-none"
                     />
@@ -596,7 +598,7 @@ export default function AdminSettingsPage() {
                     <textarea
                       rows={6}
                       value={seoFiles.sitemap_html}
-                      onChange={e => setSeoFiles(f => ({ ...f, sitemap_html: e.target.value }))}
+                      onChange={e => setSeoFiles(f => ({ ...f, sitemap_html: e.target.value, sitemap_mode: "manual" }))}
                       placeholder={`<!DOCTYPE html>\n<html>\n<body>\n  <h1>Sitemap</h1>\n  <ul>\n    <li><a href="/">Home</a></li>\n  </ul>\n</body>\n</html>`}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white resize-none"
                     />

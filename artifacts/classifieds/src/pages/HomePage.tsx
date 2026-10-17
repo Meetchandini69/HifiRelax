@@ -139,8 +139,8 @@ export default function HomePage() {
             <Star size={12} className="fill-current" /> Tamil Nadu's #1 Escorts Classifieds
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4 leading-tight">
-            Find Your Perfect<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-400">Matching Independent Escorts Companionship</span>
+            Find Verified Escorts<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-400">Across Tamil Nadu</span>
           </h1>
           <p className="text-gray-300 text-base sm:text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
             {settings.site_tagline || "Verified independent escort listings across Tamil Nadu — discreet, safe, and always up-to-date"}

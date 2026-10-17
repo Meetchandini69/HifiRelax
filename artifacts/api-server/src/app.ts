@@ -5,7 +5,8 @@ import { resolve } from "path";
 import router from "./routes";
 import { robotsRouter } from "./routes/robots.js";
 import { logger } from "./lib/logger";
-import { distExists, getDistDir, renderWithMeta } from "./lib/seoRenderer.js";
+import { distExists, getDistDir, getPublicSiteUrl, renderWithMeta } from "./lib/seoRenderer.js";
+import { generateSitemaps } from "./lib/sitemap.js";
 
 const app: Express = express();
 
@@ -47,26 +48,38 @@ import { pool } from "@workspace/db";
 app.get("/sitemap.xml", async (_req, res) => {
   try {
     const result = await pool.query(
-      "SELECT value FROM ec_settings WHERE key = 'sitemap_xml'"
+      "SELECT key, value FROM ec_settings WHERE key IN ('sitemap_xml', 'sitemap_mode')"
     );
+    const settings = Object.fromEntries(result.rows.map((row: { key: string; value: string }) => [row.key, row.value]));
+    const savedSitemap = settings.sitemap_xml || "";
+    const legacyGenerated = !settings.sitemap_mode && /<changefreq>[\s\S]*<priority>/i.test(savedSitemap);
 
-    res.type("application/xml");
-    res.send(result.rows[0]?.value || "");
+    const sitemap = savedSitemap.trim() && settings.sitemap_mode !== "auto" && !legacyGenerated
+      ? savedSitemap
+      : (await generateSitemaps(await getPublicSiteUrl())).sitemap_xml;
+    res.set("Cache-Control", "public, max-age=300").type("application/xml").send(sitemap);
   } catch (err) {
-    res.status(500).send("Failed to load sitemap");
+    logger.error({ err }, "Failed to generate sitemap.xml");
+    res.status(503).type("text/plain").send("Sitemap temporarily unavailable");
   }
 });
 
 app.get("/sitemap.html", async (_req, res) => {
   try {
     const result = await pool.query(
-      "SELECT value FROM ec_settings WHERE key = 'sitemap_html'"
+      "SELECT key, value FROM ec_settings WHERE key IN ('sitemap_html', 'sitemap_mode')"
     );
+    const settings = Object.fromEntries(result.rows.map((row: { key: string; value: string }) => [row.key, row.value]));
+    const savedSitemap = settings.sitemap_html || "";
+    const legacyGenerated = !settings.sitemap_mode && /<changefreq>[\s\S]*<priority>/i.test(settings.sitemap_xml || "");
 
-    res.type("text/html");
-    res.send(result.rows[0]?.value || "");
+    const sitemap = savedSitemap.trim() && settings.sitemap_mode !== "auto" && !legacyGenerated
+      ? savedSitemap
+      : (await generateSitemaps(await getPublicSiteUrl())).sitemap_html;
+    res.set("Cache-Control", "public, max-age=300").type("text/html").send(sitemap);
   } catch (err) {
-    res.status(500).send("Failed to load sitemap");
+    logger.error({ err }, "Failed to generate sitemap.html");
+    res.status(503).type("text/plain").send("Sitemap temporarily unavailable");
   }
 });
 
@@ -127,8 +140,8 @@ if (distExists()) {
     if (/\.[a-z0-9]{1,8}$/i.test(req.path)) { next(); return; }
 
     try {
-      const html = await renderWithMeta(req.path);
-      if (!html) {
+      const rendered = await renderWithMeta(req.path);
+      if (!rendered) {
         res.status(503).send("Frontend not available");
         return;
       }
@@ -137,11 +150,11 @@ if (distExists()) {
       // Each response contains route-specific metadata; caching it at the
       // edge would serve the wrong title/description on other URLs.
       res
-        .status(200)
+        .status(rendered.statusCode)
         .setHeader("Content-Type", "text/html; charset=utf-8")
         .setHeader("Cache-Control", "no-store")
-        .setHeader("X-Robots-Tag", "all")
-        .send(html);
+        .setHeader("X-Robots-Tag", rendered.robots)
+        .send(rendered.html);
     } catch (err) {
       logger.error({ err }, "SSR render error");
       next(err);

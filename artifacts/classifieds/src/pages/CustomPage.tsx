@@ -13,6 +13,21 @@ interface CustomPageContent {
   content_sections: { heading?: string; content_html: string; placement?: "top" | "bottom" }[];
 }
 
+function getDescription(content: string): string {
+  return content
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
+}
+
 export default function CustomPage() {
   const { slug = "" } = useParams<{ slug: string }>();
   const [page, setPage] = useState<CustomPageContent | null>(null);
@@ -27,7 +42,14 @@ export default function CustomPage() {
   }, [slug]);
 
   const title = page?.page_name || "Page";
-  useSEO({ title, description: page?.content_heading || "", canonicalPath: `/pages/${slug}` });
+  const seoContent = page?.content_sections?.length
+    ? page.content_sections.map(section => section.content_html || "").join(" ")
+    : page?.content_html || "";
+  useSEO({
+    title,
+    description: getDescription(seoContent) || page?.content_heading || "",
+    canonicalPath: `/pages/${slug}`,
+  });
 
   const sections = page?.content_sections?.length
     ? page.content_sections
