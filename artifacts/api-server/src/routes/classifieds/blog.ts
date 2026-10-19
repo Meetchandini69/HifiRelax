@@ -3,6 +3,7 @@ import { pool } from "@workspace/db";
 import { requireAdmin } from "./middleware.js";
 import sanitizeHtml from "sanitize-html";
 import { logger } from "../../lib/logger.js";
+import { randomUUID } from "crypto";
 
 export const blogRouter = Router();
 const summaryColumns = "id, title, slug, excerpt, category, cover_image_url, status, published_at, created_at, updated_at";
@@ -134,15 +135,23 @@ blogRouter.get("/:slug", async (req, res) => {
 
 function respondToSaveError(error: unknown, res: Response, operation: string, articleRef: string) {
   const code = (error as { code?: string })?.code;
-  logger.error({ err: error, operation, articleRef, databaseCode: code }, "Blog article save failed");
+  const errorId = randomUUID();
+  logger.error({ err: error, errorId, operation, articleRef, databaseCode: code }, "Blog article save failed");
   if (code === "42P01" || code === "42703") {
-    return res.status(500).json({ error: "Blog database schema is not up to date. Restart the API so its schema migration can run, then retry." });
+    return res.status(500).json({ error: `Blog database schema is not up to date. Restart the API so its schema migration can run, then retry. Reference: ${errorId}` });
   }
   if (code === "23514") {
     return res.status(400).json({ error: "Article category or publication status is invalid. Please review the form and retry." });
   }
+  if (code === "23502") {
+    return res.status(400).json({ error: `A required article field is missing. Check the article form and retry. Reference: ${errorId}` });
+  }
+  if (code === "42501") {
+    return res.status(500).json({ error: `The blog database is missing write permission. Contact support with reference ${errorId}.` });
+  }
   if (code === "22001") {
     return res.status(400).json({ error: "One of the article fields is too long. Shorten it and retry." });
   }
-  return res.status(500).json({ error: "Unable to save the article right now. Please retry. If this continues, contact support." });
+  const safeCode = typeof code === "string" && /^[A-Z0-9]{5}$/.test(code) ? ` Database code: ${code}.` : "";
+  return res.status(500).json({ error: `Unable to save the article right now. Please retry. If this continues, contact support with reference ${errorId}.${safeCode}` });
 }

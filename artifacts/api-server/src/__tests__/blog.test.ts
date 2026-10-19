@@ -77,11 +77,13 @@ describe("blog access and publishing", () => {
     expect(res.body.error).toMatch(/schema is not up to date/i);
   });
   it("returns JSON rather than a generic server page for unexpected save errors", async () => {
-    query.mockRejectedValueOnce(new Error("connection lost"));
+    query.mockRejectedValueOnce(Object.assign(new Error("connection lost"), { code: "XX000" }));
     const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send(article);
     expect(res.status).toBe(500);
     expect(res.headers["content-type"]).toContain("application/json");
     expect(res.body.error).toMatch(/Unable to save the article/);
+    expect(res.body.error).toMatch(/Database code: XX000/);
+    expect(res.body.error).toMatch(/reference [0-9a-f-]{36}/i);
   });
   it("unpublishes an existing article and clears its publication date", async () => {
     query.mockResolvedValueOnce({ rows: [{ id: 1, ...article, published_at: null }] } as any);

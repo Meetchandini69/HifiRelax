@@ -18,7 +18,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-async function runSqlFile(filename: string, label: string) {
+async function runSqlFile(filename: string, label: string, required = false) {
   const candidates = [
     join(process.cwd(), `schema/${filename}`),
     join(process.cwd(), `../../schema/${filename}`),
@@ -28,6 +28,7 @@ async function runSqlFile(filename: string, label: string) {
     try { sql = readFileSync(p, "utf-8"); break; } catch { /* try next */ }
   }
   if (!sql) {
+    if (required) throw new Error(`${label} file not found`);
     logger.warn(`${label} file not found — skipping`);
     return;
   }
@@ -35,13 +36,16 @@ async function runSqlFile(filename: string, label: string) {
     await pool.query(sql);
     logger.info(`${label} applied`);
   } catch (err) {
+    if (required) {
+      logger.error({ err }, `${label} failed`);
+      throw err;
+    }
     logger.warn({ err }, `${label} error`);
   }
 }
 
 async function runSchemaMigration() {
   await runSqlFile("schema.sql", "Schema migration");
-  await runSqlFile("003_blog.sql", "Blog schema migration");
 }
 
 async function runSeedData() {
@@ -83,13 +87,26 @@ async function seedBoostPlans() {
   }
 }
 
-app.listen(port, async (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
-  }
-  logger.info({ port }, "Server listening");
+async function startServer() {
+  await runSqlFile("003_blog.sql", "Blog schema migration", true);
+  await new Promise<void>((resolve, reject) => {
+    const server = app.listen(port, (err?: Error) => {
+      if (err) {
+        logger.error({ err }, "Error listening on port");
+        reject(err);
+        return;
+      }
+      logger.info({ port }, "Server listening");
+      resolve();
+    });
+    server.on("error", reject);
+  });
   await runSchemaMigration();
   await runSeedData();
   await seedBoostPlans();
+}
+
+startServer().catch(err => {
+  logger.fatal({ err }, "API server startup failed");
+  process.exitCode = 1;
 });
