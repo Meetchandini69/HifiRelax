@@ -90,7 +90,7 @@ blogRouter.post("/admin", requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `INSERT INTO ec_blog_posts (title, slug, excerpt, content, category, cover_image_url, status, published_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,CASE WHEN $7='published' THEN NOW() ELSE NULL END) RETURNING *`, values,
+       VALUES ($1,$2,$3,$4,$5,$6,$7::varchar,CASE WHEN $7::varchar='published' THEN NOW() ELSE NULL END) RETURNING *`, values,
     );
     return res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -105,8 +105,8 @@ blogRouter.put("/admin/:id", requireAdmin, async (req, res) => {
   try { values = parsePost(req.body); } catch (error) { return res.status(400).json({ error: (error as Error).message }); }
   try {
     const result = await pool.query(
-      `UPDATE ec_blog_posts SET title=$1, slug=$2, excerpt=$3, content=$4, category=$5, cover_image_url=$6, status=$7,
-       published_at=CASE WHEN $7='published' THEN COALESCE(published_at, NOW()) ELSE NULL END, updated_at=NOW()
+      `UPDATE ec_blog_posts SET title=$1, slug=$2, excerpt=$3, content=$4, category=$5, cover_image_url=$6, status=$7::varchar,
+       published_at=CASE WHEN $7::varchar='published' THEN COALESCE(published_at, NOW()) ELSE NULL END, updated_at=NOW()
        WHERE id=$8 RETURNING *`, [...values, req.params.id],
     );
     if (!result.rows[0]) return res.status(404).json({ error: "Article not found" });
@@ -139,6 +139,9 @@ function respondToSaveError(error: unknown, res: Response, operation: string, ar
   logger.error({ err: error, errorId, operation, articleRef, databaseCode: code }, "Blog article save failed");
   if (code === "42P01" || code === "42703") {
     return res.status(500).json({ error: `Blog database schema is not up to date. Restart the API so its schema migration can run, then retry. Reference: ${errorId}` });
+  }
+  if (code === "42P08") {
+    return res.status(500).json({ error: `The API has a blog save query parameter-type error. Deploy the latest API code and retry. Reference: ${errorId}` });
   }
   if (code === "23514") {
     return res.status(400).json({ error: "Article category or publication status is invalid. Please review the form and retry." });

@@ -48,6 +48,7 @@ describe("blog access and publishing", () => {
     query.mockResolvedValueOnce({ rows: [{ id: 1, ...article, status }] } as any);
     const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send({ ...article, status });
     expect(res.status).toBe(201);
+    expect(query.mock.calls[0][0]).toContain("CASE WHEN $7::varchar='published'");
     expect(query.mock.calls[0][1]).toEqual([article.title, article.slug, article.excerpt, article.content, article.category, "", status]);
   });
   it("sanitizes supported article HTML and removes executable markup", async () => {
@@ -89,6 +90,8 @@ describe("blog access and publishing", () => {
     query.mockResolvedValueOnce({ rows: [{ id: 1, ...article, published_at: null }] } as any);
     const res = await request(app).put("/blog/admin/1").set("Authorization", `Bearer ${token("admin")}`).send(article);
     expect(res.status).toBe(200);
+    expect(query.mock.calls[0][0]).toContain("status=$7::varchar");
+    expect(query.mock.calls[0][0]).toContain("CASE WHEN $7::varchar='published'");
     expect(query.mock.calls[0][0]).toContain("ELSE NULL END");
     expect(query.mock.calls[0][1]).toEqual(expect.arrayContaining(["draft", "1"]));
   });
