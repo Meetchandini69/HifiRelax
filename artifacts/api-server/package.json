@@ -22,7 +22,8 @@
     "express": "^5",
     "jsonwebtoken": "^9.0.3",
     "pino": "^9",
-    "pino-http": "^10"
+    "pino-http": "^10",
+    "sanitize-html": "^2.18.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -31,6 +32,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "catalog:",
+    "@types/sanitize-html": "^2.16.2",
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^4.1.4",
     "cross-env": "catalog:",

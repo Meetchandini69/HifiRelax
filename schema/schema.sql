@@ -172,4 +172,6 @@ CREATE TABLE IF NOT EXISTS ec_blog_posts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK ((status = 'published' AND published_at IS NOT NULL) OR (status = 'draft' AND published_at IS NULL))
 );
+ALTER TABLE ec_blog_posts
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 CREATE INDEX IF NOT EXISTS idx_blog_published ON ec_blog_posts (published_at DESC, id DESC) WHERE status = 'published';

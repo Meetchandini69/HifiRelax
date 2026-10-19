@@ -9,6 +9,7 @@ interface RichTextEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   minHeight?: string;
+  ariaLabel?: string;
 }
 
 type Command = "bold" | "italic" | "underline" | "insertUnorderedList" | "insertOrderedList" | "undo" | "redo";
@@ -41,6 +42,7 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Write your content here…",
   minHeight = "180px",
+  ariaLabel,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +94,7 @@ export default function RichTextEditor({
         contentEditable
         role="textbox"
         aria-multiline="true"
+        aria-label={ariaLabel}
         data-placeholder={placeholder}
         onInput={event => onChange(event.currentTarget.innerHTML)}
         className="prose prose-sm max-w-none px-4 py-3 text-gray-700 outline-none empty:before:pointer-events-none empty:before:text-gray-400 empty:before:content-[attr(data-placeholder)]"

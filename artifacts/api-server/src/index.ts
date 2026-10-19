@@ -41,6 +41,7 @@ async function runSqlFile(filename: string, label: string) {
 
 async function runSchemaMigration() {
   await runSqlFile("schema.sql", "Schema migration");
+  await runSqlFile("003_blog.sql", "Blog schema migration");
 }
 
 async function runSeedData() {

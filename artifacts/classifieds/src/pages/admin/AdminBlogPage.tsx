@@ -5,10 +5,52 @@ import AdminNav from "@/components/AdminNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { blogDate, type BlogInput, type BlogPost } from "@/lib/blog";
+import RichTextEditor from "@/components/RichTextEditor";
+import { sanitizeBlogHtml } from "@/lib/blogHtml";
 
 const emptyPost = (): BlogInput => ({ title: "", slug: "", excerpt: "", content: "", category: "Health", cover_image_url: "", status: "draft" });
 const inputClass = "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-500";
 const slugify = (value: string) => value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 200).replace(/-$/, "");
+
+function ArticleContentEditor({ value, onChange, disabled }: { value: string; onChange: (value: string) => void; disabled: boolean }) {
+  const [mode, setMode] = useState<"visual" | "html">("visual");
+  return (
+    <div className="mt-1">
+      <div className="mb-2 flex gap-2" role="group" aria-label="Article content editor mode">
+        <button type="button" disabled={disabled} aria-pressed={mode === "visual"} onClick={() => {
+          if (mode === "html") onChange(sanitizeBlogHtml(value));
+          setMode("visual");
+        }} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${mode === "visual" ? "border-rose-500 bg-rose-50 text-rose-700" : "border-gray-200 text-gray-600"}`}>
+          Visual editor
+        </button>
+        <button type="button" disabled={disabled} aria-pressed={mode === "html"} onClick={() => setMode("html")}
+          className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${mode === "html" ? "border-rose-500 bg-rose-50 text-rose-700" : "border-gray-200 text-gray-600"}`}>
+          HTML source
+        </button>
+      </div>
+      {mode === "visual" ? (
+        <RichTextEditor
+          value={sanitizeBlogHtml(value)}
+          onChange={onChange}
+          placeholder="Write your article. Use the toolbar for headings, lists, and links."
+          minHeight="300px"
+          ariaLabel="Article content"
+        />
+      ) : (
+        <textarea
+          aria-label="HTML source"
+          maxLength={100000}
+          rows={16}
+          value={value}
+          onChange={event => onChange(event.target.value)}
+          placeholder="<article>\n  <h2>Article heading</h2>\n  <p>Write your article here.</p>\n</article>"
+          className={`${inputClass} font-mono text-xs`}
+        />
+      )}
+      <span className="mt-1 block text-xs text-gray-500">Format with the visual toolbar or edit/paste HTML in source mode. Scripts and unsafe attributes are removed when saved.</span>
+    </div>
+  );
+}
 
 export default function AdminBlogPage() {
   const { user, loading: authLoading } = useAuth();
@@ -98,10 +140,10 @@ export default function AdminBlogPage() {
           <label className="block text-sm font-medium">Cover image URL (optional)
             <input type="url" maxLength={2000} placeholder="https://example.com/image.jpg" value={form.cover_image_url} onChange={event => setForm({ ...form, cover_image_url: event.target.value })} className={inputClass} />
           </label>
-          <label className="block text-sm font-medium">Article content
-            <textarea required maxLength={100000} rows={14} value={form.content} onChange={event => setForm({ ...form, content: event.target.value })} className={inputClass} />
-            <span className="mt-1 block text-xs text-gray-500">Write plain text. Blank lines separate paragraphs; HTML is displayed as text.</span>
-          </label>
+          <div className="block text-sm font-medium">
+            <label>Article content</label>
+            <ArticleContentEditor disabled={busy} value={form.content} onChange={content => setForm(current => current ? { ...current, content } : current)} />
+          </div>
           <div className="flex flex-wrap gap-3">
             <button type="submit" className="rounded-lg bg-rose-600 px-4 py-2 font-semibold text-white disabled:opacity-50">{busy ? "Saving…" : form.status === "published" ? "Save & publish" : "Save draft"}</button>
             <button type="button" onClick={() => setPreview(value => !value)} className="rounded-lg border px-4 py-2">{preview ? "Hide preview" : "Preview"}</button>
@@ -113,7 +155,7 @@ export default function AdminBlogPage() {
           <h2 className="mt-3 text-2xl font-bold break-words">{form.title}</h2>
           <p className="mt-3 text-gray-600 break-words">{form.excerpt}</p>
           {/^https?:\/\//i.test(form.cover_image_url) && <img src={form.cover_image_url} alt="" className="mt-4 max-h-80 w-full rounded-xl object-cover" />}
-          <div className="mt-5 whitespace-pre-wrap break-words leading-8">{form.content}</div>
+          <div className="prose prose-gray mt-5 max-w-none break-words" dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(form.content) }} />
         </article>}
       </form>}
       <label className="mb-5 block text-sm font-medium">Search articles

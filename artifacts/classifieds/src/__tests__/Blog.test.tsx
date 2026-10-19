@@ -11,7 +11,7 @@ vi.mock("@/hooks/useSEO", () => ({ useSEO: vi.fn() }));
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 vi.mock("@/lib/api", () => ({ api: { getBlogPosts: vi.fn(), getBlogPost: vi.fn(), adminGetBlogPosts: vi.fn(), adminCreateBlogPost: vi.fn(), adminUpdateBlogPost: vi.fn(), adminDeleteBlogPost: vi.fn() } }));
-const post = { id: 1, title: "Listening together", slug: "listening-together", excerpt: "A moment of connection", category: "Relationships" as const, content: "<script>alert('unsafe')</script>\n\nListen with care.", status: "published" as const, cover_image_url: "", published_at: "2026-09-23T10:00:00Z", created_at: "2026-09-23T10:00:00Z", updated_at: "2026-09-23T10:00:00Z" };
+const post = { id: 1, title: "Listening together", slug: "listening-together", excerpt: "A moment of connection", category: "Relationships" as const, content: "<script>alert('unsafe')</script><p>Listen with care.</p>", status: "published" as const, cover_image_url: "", published_at: "2026-09-23T10:00:00Z", created_at: "2026-09-23T10:00:00Z", updated_at: "2026-09-23T10:00:00Z" };
 beforeEach(() => { vi.resetAllMocks(); auth.user = { role: "admin" }; });
 afterEach(cleanup);
 
@@ -29,12 +29,12 @@ describe("public blog", () => {
     await waitFor(() => expect(api.getBlogPosts).toHaveBeenCalled());
     expect(view.container).toBeEmptyDOMElement();
   });
-  it("renders article content as text without executing HTML", async () => {
+  it("renders sanitized article HTML without executing scripts", async () => {
     vi.mocked(api.getBlogPost).mockResolvedValue(post);
     const view = render(<BlogPostPage />);
     expect(await screen.findByRole("heading", { name: post.title })).toBeInTheDocument();
     expect(view.container.querySelector("script")).toBeNull();
-    expect(screen.getByText(/Listen with care/).textContent).toContain("<script>");
+    expect(screen.getByText(/Listen with care/).tagName).toBe("P");
   });
   it("shows an unavailable state for unpublished articles", async () => {
     vi.mocked(api.getBlogPost).mockRejectedValue(new Error("Article not found"));
@@ -57,9 +57,21 @@ describe("admin blog", () => {
     await screen.findByText(/No articles yet/);
     fireEvent.click(screen.getByRole("button", { name: "New article" }));
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Everyday connection" } });
-    fireEvent.change(screen.getByLabelText(/Article content/), { target: { value: "Make time to listen." } });
+    fireEvent.click(screen.getByRole("button", { name: "HTML source" }));
+    fireEvent.change(screen.getByLabelText("HTML source"), { target: { value: "<p>Make time to listen.</p>" } });
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
-    await waitFor(() => expect(api.adminCreateBlogPost).toHaveBeenCalledWith(expect.objectContaining({ title: "Everyday connection", slug: "everyday-connection", status: "draft", content: "Make time to listen." })));
+    await waitFor(() => expect(api.adminCreateBlogPost).toHaveBeenCalledWith(expect.objectContaining({ title: "Everyday connection", slug: "everyday-connection", status: "draft", content: "<p>Make time to listen.</p>" })));
+  });
+  it("previews formatted HTML from the source editor safely", async () => {
+    vi.mocked(api.adminGetBlogPosts).mockResolvedValue([]);
+    render(<AdminBlogPage />);
+    await screen.findByText(/No articles yet/);
+    fireEvent.click(screen.getByRole("button", { name: "New article" }));
+    fireEvent.click(screen.getByRole("button", { name: "HTML source" }));
+    fireEvent.change(screen.getByLabelText("HTML source"), { target: { value: "<h2>Guide</h2><script>alert(1)</script><p>Readable copy</p>" } });
+    fireEvent.click(screen.getByRole("button", { name: "Preview" }));
+    expect(screen.getByRole("heading", { name: "Guide" })).toBeInTheDocument();
+    expect(document.querySelector("script")).toBeNull();
   });
   it("lets admins publish a saved draft", async () => {
     vi.mocked(api.adminGetBlogPosts).mockResolvedValue([{ ...post, status: "draft" }]);

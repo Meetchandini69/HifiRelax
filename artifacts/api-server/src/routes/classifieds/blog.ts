@@ -1,9 +1,30 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { pool } from "@workspace/db";
 import { requireAdmin } from "./middleware.js";
+import sanitizeHtml from "sanitize-html";
+import { logger } from "../../lib/logger.js";
 
 export const blogRouter = Router();
 const summaryColumns = "id, title, slug, excerpt, category, cover_image_url, status, published_at, created_at, updated_at";
+const contentSanitizer = {
+  allowedTags: [
+    "a", "article", "blockquote", "br", "caption", "code", "dd", "div", "dl", "dt",
+    "em", "figcaption", "figure", "h2", "h3", "h4", "h5", "h6", "hr", "i", "img",
+    "li", "ol", "p", "pre", "section", "strong", "table", "tbody", "td", "th",
+    "thead", "tr", "u", "ul",
+  ],
+  allowedAttributes: {
+    a: ["href", "name", "target", "title", "rel"],
+    img: ["src", "alt", "title", "width", "height", "loading"],
+    td: ["colspan", "rowspan"],
+    th: ["colspan", "rowspan", "scope"],
+  },
+  allowedSchemes: ["http", "https", "mailto", "tel"],
+  allowedSchemesByTag: { img: ["http", "https"] },
+  transformTags: {
+    a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer" }),
+  },
+};
 
 function parsePost(body: unknown) {
   if (!body || typeof body !== "object") throw new Error("Article details are required");
@@ -20,7 +41,9 @@ function parsePost(body: unknown) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error("Slug must use lowercase letters, numbers and hyphens");
   if (slug === "admin") throw new Error("This slug is reserved; choose another article slug");
   const excerpt = read("excerpt", 500);
-  const content = read("content", 100000, true);
+  const rawContent = read("content", 100000, true);
+  if (rawContent.includes("\0")) throw new Error("content must not contain null characters");
+  const content = sanitizeHtml(rawContent, contentSanitizer);
   const category = read("category", 50, true);
   if (!["Health", "Lifestyle", "Relationships"].includes(category)) throw new Error("Choose a valid category");
   const status = read("status", 20, true);
@@ -54,10 +77,13 @@ blogRouter.get("/", async (req, res) => {
 
 blogRouter.get("/admin", requireAdmin, async (_req, res) => {
   const result = await pool.query("SELECT * FROM ec_blog_posts ORDER BY updated_at DESC, id DESC");
-  res.json(result.rows);
+  res.json(result.rows.map((post: Record<string, unknown>) => ({
+    ...post,
+    content: sanitizeHtml(String(post.content || ""), contentSanitizer),
+  })));
 });
 
-blogRouter.post("/admin", requireAdmin, async (req, res, next) => {
+blogRouter.post("/admin", requireAdmin, async (req, res) => {
   let values: string[];
   try { values = parsePost(req.body); } catch (error) { return res.status(400).json({ error: (error as Error).message }); }
   try {
@@ -68,11 +94,11 @@ blogRouter.post("/admin", requireAdmin, async (req, res, next) => {
     return res.status(201).json(result.rows[0]);
   } catch (error) {
     if ((error as { code?: string }).code === "23505") return res.status(409).json({ error: "This slug is already used by another article" });
-    return next(error);
+    return respondToSaveError(error, res, "create", values[1]);
   }
 });
 
-blogRouter.put("/admin/:id", requireAdmin, async (req, res, next) => {
+blogRouter.put("/admin/:id", requireAdmin, async (req, res) => {
   if (!/^[1-9]\d*$/.test(String(req.params.id))) return res.status(400).json({ error: "Invalid article ID" });
   let values: string[];
   try { values = parsePost(req.body); } catch (error) { return res.status(400).json({ error: (error as Error).message }); }
@@ -86,7 +112,7 @@ blogRouter.put("/admin/:id", requireAdmin, async (req, res, next) => {
     return res.json(result.rows[0]);
   } catch (error) {
     if ((error as { code?: string }).code === "23505") return res.status(409).json({ error: "This slug is already used by another article" });
-    return next(error);
+    return respondToSaveError(error, res, "update", String(req.params.id));
   }
 });
 
@@ -100,5 +126,23 @@ blogRouter.delete("/admin/:id", requireAdmin, async (req, res) => {
 blogRouter.get("/:slug", async (req, res) => {
   const result = await pool.query("SELECT * FROM ec_blog_posts WHERE slug=$1 AND status='published'", [req.params.slug]);
   if (!result.rows[0]) return res.status(404).json({ error: "Article not found" });
-  return res.json(result.rows[0]);
+  return res.json({
+    ...result.rows[0],
+    content: sanitizeHtml(String(result.rows[0].content || ""), contentSanitizer),
+  });
 });
+
+function respondToSaveError(error: unknown, res: Response, operation: string, articleRef: string) {
+  const code = (error as { code?: string })?.code;
+  logger.error({ err: error, operation, articleRef, databaseCode: code }, "Blog article save failed");
+  if (code === "42P01" || code === "42703") {
+    return res.status(500).json({ error: "Blog database schema is not up to date. Restart the API so its schema migration can run, then retry." });
+  }
+  if (code === "23514") {
+    return res.status(400).json({ error: "Article category or publication status is invalid. Please review the form and retry." });
+  }
+  if (code === "22001") {
+    return res.status(400).json({ error: "One of the article fields is too long. Shorten it and retry." });
+  }
+  return res.status(500).json({ error: "Unable to save the article right now. Please retry. If this continues, contact support." });
+}

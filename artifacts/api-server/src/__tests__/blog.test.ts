@@ -37,16 +37,51 @@ describe("blog access and publishing", () => {
     expect(query).toHaveBeenCalledWith(expect.stringContaining("AND status='published'"), ["private-draft"]);
   });
   it("allows an admin to read drafts", async () => {
-    query.mockResolvedValueOnce({ rows: [{ id: 1, ...article }] } as any);
+    query.mockResolvedValueOnce({ rows: [{ id: 1, ...article, content: "<p>Safe</p><script>bad()</script>" }] } as any);
     const res = await request(app).get("/blog/admin").set("Authorization", `Bearer ${token("admin")}`);
     expect(res.status).toBe(200);
     expect(res.body[0].status).toBe("draft");
+    expect(res.body[0].content).toContain("<p>Safe</p>");
+    expect(res.body[0].content).not.toContain("<script>");
   });
   it.each(["draft", "published"])("saves a new %s article", async status => {
     query.mockResolvedValueOnce({ rows: [{ id: 1, ...article, status }] } as any);
     const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send({ ...article, status });
     expect(res.status).toBe(201);
     expect(query.mock.calls[0][1]).toEqual([article.title, article.slug, article.excerpt, article.content, article.category, "", status]);
+  });
+  it("sanitizes supported article HTML and removes executable markup", async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 1, ...article }] } as any);
+    const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send({
+      ...article,
+      content: '<article><h2>Useful tips</h2><p>Read <a href="javascript:alert(1)" onclick="alert(1)">this</a>.</p><script>alert(1)</script></article>',
+    });
+    expect(res.status).toBe(201);
+    expect(query.mock.calls[0][1]?.[3]).toContain("<h2>Useful tips</h2>");
+    expect(query.mock.calls[0][1]?.[3]).toContain('<p>Read <a rel="noopener noreferrer">this</a>.</p>');
+    expect(query.mock.calls[0][1]?.[3]).not.toMatch(/script|onclick|javascript:/i);
+  });
+  it("rejects null bytes in article content before database save", async () => {
+    const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send({
+      ...article,
+      content: "Article\u0000content",
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/null characters/);
+    expect(query).not.toHaveBeenCalled();
+  });
+  it("returns a useful migration message for database schema errors", async () => {
+    query.mockRejectedValueOnce({ code: "42703" });
+    const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send(article);
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/schema is not up to date/i);
+  });
+  it("returns JSON rather than a generic server page for unexpected save errors", async () => {
+    query.mockRejectedValueOnce(new Error("connection lost"));
+    const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send(article);
+    expect(res.status).toBe(500);
+    expect(res.headers["content-type"]).toContain("application/json");
+    expect(res.body.error).toMatch(/Unable to save the article/);
   });
   it("unpublishes an existing article and clears its publication date", async () => {
     query.mockResolvedValueOnce({ rows: [{ id: 1, ...article, published_at: null }] } as any);
