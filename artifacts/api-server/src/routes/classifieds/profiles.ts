@@ -290,21 +290,32 @@ router.put("/admin/:id/verify", requireAdmin as any, async (req: any, res) => {
 
 // Admin: update SEO content for an individual profile
 router.put("/admin/:id/seo-content", requireAdmin as any, async (req: any, res) => {
-  const { seo_content_heading, seo_content_html, seo_content_sections } = req.body;
+  const { seo_content_heading, seo_content_html, seo_content_sections, meta_title, meta_description } = req.body;
+  if (typeof (meta_title ?? "") !== "string" || (meta_title ?? "").length > 300 ||
+      typeof (meta_description ?? "") !== "string" || (meta_description ?? "").length > 500) {
+    res.status(400).json({ error: "Meta title must be up to 300 characters and meta description up to 500 characters" });
+    return;
+  }
   try {
     const r = await pool.query(
       `UPDATE ec_profiles
-       SET seo_content_heading=$1, seo_content_html=$2, seo_content_sections=$3, updated_at=NOW()
-       WHERE id=$4
+       SET seo_content_heading=$1, seo_content_html=$2, seo_content_sections=$3,
+           meta_title=$4, meta_description=$5, updated_at=NOW()
+       WHERE id=$6
        RETURNING *`,
       [
         seo_content_heading || null,
         seo_content_html || null,
         JSON.stringify(seo_content_sections || []),
+        meta_title?.trim() || null,
+        meta_description?.trim() || null,
         req.params.id,
       ]
     );
-    if (r.rows.length === 0) return res.status(404).json({ error: "Profile not found" });
+    if (r.rows.length === 0) {
+      res.status(404).json({ error: "Profile not found" });
+      return;
+    }
     res.json(r.rows[0]);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

@@ -36,6 +36,8 @@ function ProfileSeoEditor({
         ? [{ ...newProfileSeoSection(), content_html: profile.seo_content_html }]
         : [newProfileSeoSection()]
   );
+  const [metaTitle, setMetaTitle] = useState(profile.meta_title || "");
+  const [metaDescription, setMetaDescription] = useState(profile.meta_description || "");
   const [saving, setSaving] = useState(false);
 
   const updateSection = (index: number, patch: Partial<ProfileSeoSection>) =>
@@ -48,6 +50,8 @@ function ProfileSeoEditor({
         seo_content_heading: heading,
         seo_content_html: sections.map(section => section.content_html).join(""),
         seo_content_sections: sections,
+        meta_title: metaTitle,
+        meta_description: metaDescription,
       });
       toast.success("Profile SEO content saved");
       onSaved();
@@ -64,9 +68,9 @@ function ProfileSeoEditor({
       <div className="w-full max-w-3xl rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-rose-600">Profile Content</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-rose-600">Listing SEO</p>
             <h2 className="mt-1 text-base font-bold text-gray-900">{profile.title}</h2>
-            <p className="mt-0.5 text-xs text-gray-500">Add custom information, services, availability, and location details for this profile.</p>
+            <p className="mt-0.5 text-xs text-gray-500">Set search-result metadata and add custom profile information.</p>
           </div>
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200" aria-label="Close SEO editor">
             <X size={16} />
@@ -74,6 +78,19 @@ function ProfileSeoEditor({
         </div>
 
         <div className="space-y-5 px-6 py-6">
+          <section className="space-y-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-600">Search metadata</h3>
+            <label className="block text-sm font-medium text-gray-700">Meta title
+              <input maxLength={300} value={metaTitle} onChange={event => setMetaTitle(event.target.value)}
+                placeholder={`${profile.title} – ${profile.area || ""}, ${profile.city || ""}`}
+                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm" />
+            </label>
+            <label className="block text-sm font-medium text-gray-700">Meta description
+              <textarea maxLength={500} rows={3} value={metaDescription} onChange={event => setMetaDescription(event.target.value)}
+                placeholder="Short description for search results"
+                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm" />
+            </label>
+          </section>
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-500">
               Section Heading (optional)
@@ -149,7 +166,7 @@ function ProfileSeoEditor({
             disabled={saving}
             className="flex items-center gap-2 rounded-xl bg-rose-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60"
           >
-            <Save size={15} /> {saving ? "Saving…" : "Save Profile Content"}
+            <Save size={15} /> {saving ? "Saving…" : "Save Listing SEO"}
           </button>
         </div>
       </div>
@@ -294,7 +311,7 @@ export default function AdminProfilesPage() {
                       onClick={() => setSeoProfile(p)}
                       className="flex items-center gap-1 text-xs bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-2.5 py-1.5 rounded-lg font-medium transition-colors"
                     >
-                      <Edit3 size={13} /> Profile Content
+                      <Edit3 size={13} /> Listing SEO
                     </button>
                     <button onClick={() => setSelectedProfile(p)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="View">
                       <Eye size={15} />

@@ -8,6 +8,7 @@ import {
   X, Edit3, HelpCircle
 } from "lucide-react";
 import RichTextEditor from "@/components/RichTextEditor";
+import { sanitizeBlogHtml } from "@/lib/blogHtml";
 
 interface Page {
   page_key: string;
@@ -40,6 +41,8 @@ interface EditState {
   content_heading: string;
   content_html: string;
   content_sections: ContentSection[];
+  meta_title: string;
+  meta_description: string;
   faq_json: FAQ[];
   featured_profile_ids: number[];
   featured_profile_count: number;
@@ -126,6 +129,7 @@ function ContentSectionsEditor({
   sections: ContentSection[];
   onChange: (sections: ContentSection[]) => void;
 }) {
+  const [htmlMode, setHtmlMode] = useState<Record<string, boolean>>({});
   const add = () => onChange([
     ...sections,
     newContentSection(),
@@ -178,12 +182,31 @@ function ContentSectionsEditor({
               <option value="top">Top</option>
             </select>
           </div>
-          <RichTextEditor
-            value={section.content_html}
-            onChange={content_html => update(index, { content_html })}
-            placeholder="Write this section’s content…"
-            minHeight="150px"
-          />
+          <div className="mb-2 flex gap-2" role="group" aria-label={`Editor mode for content section ${index + 1}`}>
+            <button type="button" aria-pressed={!htmlMode[section.id]} onClick={() => {
+              if (htmlMode[section.id]) update(index, { content_html: sanitizeBlogHtml(section.content_html) });
+              setHtmlMode(current => ({ ...current, [section.id]: false }));
+            }}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${!htmlMode[section.id] ? "border-rose-500 bg-rose-50 text-rose-700" : "border-gray-200 text-gray-600"}`}>
+              Visual editor
+            </button>
+            <button type="button" aria-pressed={!!htmlMode[section.id]} onClick={() => setHtmlMode(current => ({ ...current, [section.id]: true }))}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${htmlMode[section.id] ? "border-rose-500 bg-rose-50 text-rose-700" : "border-gray-200 text-gray-600"}`}>
+              HTML source
+            </button>
+          </div>
+          {htmlMode[section.id] ? (
+            <textarea aria-label={`HTML source for content section ${index + 1}`} rows={10} value={section.content_html}
+              onChange={event => update(index, { content_html: event.target.value })}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-rose-500" />
+          ) : (
+            <RichTextEditor
+              value={section.content_html}
+              onChange={content_html => update(index, { content_html })}
+              placeholder="Write this section’s content…"
+              minHeight="150px"
+            />
+          )}
         </div>
       ))}
       <button
@@ -231,6 +254,8 @@ function PageEditor({
         content_heading: form.content_heading,
         content_html: form.content_sections.map(section => section.content_html).join(""),
         content_sections: form.content_sections,
+        meta_title: form.meta_title,
+        meta_description: form.meta_description,
         faq_json: form.faq_json,
         featured_profile_ids: form.featured_profile_ids,
         featured_profile_count: form.featured_profile_count,
@@ -305,6 +330,22 @@ function PageEditor({
                 </div>
               )}
             </div>
+          )}
+
+          {/* Content heading */}
+          {form.page_type === "custom" && (
+            <section className="space-y-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-600">Search metadata</h3>
+              <label className="block text-sm font-medium text-gray-700">Meta title
+                <input maxLength={300} value={form.meta_title} onChange={event => set("meta_title", event.target.value)}
+                  placeholder={form.page_name} className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm" />
+                <span className="text-xs font-normal text-gray-500">Leave blank to use the page title.</span>
+              </label>
+              <label className="block text-sm font-medium text-gray-700">Meta description
+                <textarea maxLength={500} rows={3} value={form.meta_description} onChange={event => set("meta_description", event.target.value)}
+                  placeholder="A short summary for search results" className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm" />
+              </label>
+            </section>
           )}
 
           {/* Content heading */}
@@ -398,6 +439,8 @@ export default function AdminPageContentPage() {
       page_name: p.page_name,
       slug_ref: p.slug_ref,
       content_heading: existing?.content_heading || "",
+      meta_title: existing?.meta_title || "",
+      meta_description: existing?.meta_description || "",
       content_html: existing?.content_html || "",
       content_sections: existing?.content_sections?.length
         ? existing.content_sections.map((section: ContentSection) => ({ ...section, placement: section.placement || "bottom" }))

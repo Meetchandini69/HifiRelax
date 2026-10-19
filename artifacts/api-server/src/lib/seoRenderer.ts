@@ -265,18 +265,26 @@ async function resolveMetaForPath(
   };
 
   if (path === "/blog") {
-    return meta(`Health, Lifestyle & Relationships Blog | ${siteName}`, "Articles about wellbeing, everyday lifestyle and building stronger relationships.");
+    const seoKey = "blog";
+    return meta(
+      `${mk("Health, Lifestyle & Relationships Blog", seoKey)} | ${siteName}`,
+      md("Articles about wellbeing, everyday lifestyle and building stronger relationships.", seoKey),
+      seoKey,
+    );
   }
   const blogMatch = path.match(/^\/blog\/([^/]+)$/);
   if (blogMatch) {
     try {
       const result = await pool.query(
-        "SELECT title, excerpt, cover_image_url FROM ec_blog_posts WHERE slug=$1 AND status='published'",
+        "SELECT title, excerpt, cover_image_url, meta_title, meta_description FROM ec_blog_posts WHERE slug=$1 AND status='published'",
         [blogMatch[1]],
       );
       if (result.rows[0]) {
         const post = result.rows[0];
-        return { ...meta(`${post.title} | ${siteName}`, post.excerpt || "Health, lifestyle and relationship articles."), ogImage: post.cover_image_url || ogImage };
+        return {
+          ...meta(post.meta_title || `${post.title} | ${siteName}`, post.meta_description || post.excerpt || "Health, lifestyle and relationship articles."),
+          ogImage: post.cover_image_url || ogImage,
+        };
       }
       return { ...meta(`Article not found | ${siteName}`, "This article is not available."), robots: "noindex, nofollow", statusCode: 404 };
     } catch (error) {
@@ -289,7 +297,7 @@ async function resolveMetaForPath(
   if (customPageMatch) {
     try {
       const result = await pool.query(
-        "SELECT page_name, content_heading, content_html, content_sections FROM ec_page_content WHERE page_type='custom' AND slug_ref=$1 LIMIT 1",
+        "SELECT page_name, content_heading, content_html, content_sections, meta_title, meta_description FROM ec_page_content WHERE page_type='custom' AND slug_ref=$1 LIMIT 1",
         [customPageMatch[1]],
       );
       const page = result.rows[0];
@@ -301,7 +309,11 @@ async function resolveMetaForPath(
         : "";
       const description = textFromHtml(sections || page.content_html || "").slice(0, 160);
       const seoKey = `custom_${customPageMatch[1]}`;
-      return meta(`${mk(page.page_name, seoKey)} | ${siteName}`, md(description || page.content_heading || page.page_name, seoKey), seoKey);
+      return meta(
+        page.meta_title || `${mk(page.page_name, seoKey)} | ${siteName}`,
+        page.meta_description || md(description || page.content_heading || page.page_name, seoKey),
+        seoKey,
+      );
     } catch (error) {
       logger.warn({ error, slug: customPageMatch[1] }, "seoRenderer: custom page query failed");
       return { ...meta(`Page unavailable | ${siteName}`, "This page is temporarily unavailable."), robots: "noindex, nofollow", statusCode: 503 };
@@ -335,7 +347,7 @@ async function resolveMetaForPath(
     const profileSlug = profileMatch[2];
     try {
       const r = await pool.query(
-        `SELECT p.title, p.name, p.age, p.services,
+        `SELECT p.title, p.name, p.age, p.services, p.meta_title, p.meta_description,
                 l.area, l.city, l.state
          FROM ec_profiles p
          JOIN ec_locations l ON p.location_id = l.id
@@ -349,8 +361,8 @@ async function resolveMetaForPath(
           ? p.services
           : JSON.parse(p.services || "[]");
         return meta(
-          `${p.title} – ${p.area}, ${p.city} | ${siteName}`,
-          `${p.name}${p.age ? `, ${p.age} yrs,` : ""} independent escort in ${p.area}, ${p.city}, ${p.state}. Services: ${svcs.slice(0, 5).join(", ")}. Contact directly.`,
+          p.meta_title || `${p.title} – ${p.area}, ${p.city} | ${siteName}`,
+          p.meta_description || `${p.name}${p.age ? `, ${p.age} yrs,` : ""} independent escort in ${p.area}, ${p.city}, ${p.state}. Services: ${svcs.slice(0, 5).join(", ")}. Contact directly.`,
         );
       }
       return { ...meta(`Profile not found | ${siteName}`, "This profile is not available."), robots: "noindex, nofollow", statusCode: 404 };

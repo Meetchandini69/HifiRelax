@@ -12,7 +12,12 @@ export default function BlogPostPage() {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  useSEO({ title: post?.title || "Blog article", description: post?.excerpt || "Health, lifestyle and relationship articles.", canonicalPath: `/blog/${slug}` });
+  useSEO({
+    title: post?.meta_title || post?.title || "Blog article",
+    description: post?.meta_description || post?.excerpt || "Health, lifestyle and relationship articles.",
+    canonicalPath: `/blog/${slug}`,
+    appendSiteName: !post?.meta_title,
+  });
   useEffect(() => {
     let active = true;
     setPost(null); setError(""); setLoading(true);

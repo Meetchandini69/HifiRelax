@@ -52,9 +52,10 @@ interface SEOOptions {
   canonical?: string;      // full URL (backward compat)
   canonicalPath?: string;  // path only — base taken from settings.site_url or window.location.origin
   seoKey?: string;         // e.g. "home", "escorts", "state_tamilnadu", "city_coimbatore"
+  appendSiteName?: boolean;
 }
 
-export function useSEO({ title, description, canonical, canonicalPath, seoKey }: SEOOptions) {
+export function useSEO({ title, description, canonical, canonicalPath, seoKey, appendSiteName = true }: SEOOptions) {
   const { settings } = useSettings();
   const [currentPath] = useLocation();
   const siteName = settings.site_name || "EliteEscorts";
@@ -82,17 +83,18 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     const finalCanonical = overrideCanonical || resolvedCanonical;
     const finalOgImage   = overrideOgImage || ogImage;
 
-    document.title = finalTitle ? `${finalTitle} | ${siteName}` : siteName;
+    const documentTitle = finalTitle ? (appendSiteName ? `${finalTitle} | ${siteName}` : finalTitle) : siteName;
+    document.title = documentTitle;
     if (finalDesc) setMeta("description", finalDesc);
 
-    setOgMeta("og:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
+    setOgMeta("og:title", documentTitle);
     setOgMeta("og:description", finalDesc);
     setOgMeta("og:type",        "website");
     if (finalOgImage) setOgMeta("og:image", finalOgImage);
     setOgMeta("og:url",    finalCanonical);
 
     setMeta("twitter:card",        "summary_large_image");
-    setMeta("twitter:title",       finalTitle ? `${finalTitle} | ${siteName}` : siteName);
+    setMeta("twitter:title", documentTitle);
     setMeta("twitter:description", finalDesc);
     if (finalOgImage) setMeta("twitter:image", finalOgImage);
 
@@ -101,5 +103,5 @@ export function useSEO({ title, description, canonical, canonicalPath, seoKey }:
     setJsonLd(overrideSchema);
 
     return () => { document.title = siteName; setRobots(""); };
-  }, [title, description, resolvedCanonical, currentPath, seoKey, settings]);
+  }, [title, description, resolvedCanonical, currentPath, seoKey, settings, appendSiteName]);
 }

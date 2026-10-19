@@ -134,6 +134,31 @@ describe("POST /api/classifieds/page-content/admin/upsert", () => {
     expect(res.body.slug_ref).toBe("privacy-policy");
     expect(mockQuery.mock.calls[0][1]).toContain("custom_privacy-policy");
   });
+  it("stores custom page metadata and sanitizes HTML source", async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [{
+        id: 8, page_key: "custom_terms", page_type: "custom", page_name: "Terms", slug_ref: "terms",
+        content_html: "<section><p>Safe</p></section>",
+        content_sections: [{ content_html: "<h2>More</h2>" }],
+        meta_title: "Terms of service", meta_description: "Terms for using the site.",
+      }],
+    } as any);
+    const res = await request(app)
+      .post("/api/classifieds/page-content/admin/upsert")
+      .set("Authorization", `Bearer ${adminToken()}`)
+      .send({
+        page_key: "custom_terms", page_type: "custom", page_name: "Terms", slug_ref: "terms",
+        content_html: '<section><p onclick="bad()">Safe</p><script>bad()</script></section>',
+        content_sections: [{ content_html: "<h2>More</h2>" }],
+        meta_title: "Terms of service", meta_description: "Terms for using the site.",
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.meta_title).toBe("Terms of service");
+    expect(res.body.content_html).toBe("<section><p>Safe</p></section>");
+    expect(mockQuery.mock.calls[0][0]).toContain("meta_title, meta_description");
+    expect(mockQuery.mock.calls[0][1]).toContain("Terms of service");
+    expect(mockQuery.mock.calls[0][1]).not.toContain('<script>bad()</script>');
+  });
 });
 
 describe("GET /api/classifieds/page-content/admin/list", () => {

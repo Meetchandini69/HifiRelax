@@ -43,6 +43,72 @@ describe("server-rendered SEO metadata", () => {
     expect(result?.html).toContain('href="https://example.com/pages/privacy-policy"');
   });
 
+  it("prefers custom-page SEO fields when set", async () => {
+    query.mockResolvedValueOnce({
+      rows: [{
+        page_name: "Privacy Policy",
+        content_heading: "Privacy",
+        content_html: "<p>Page content.</p>",
+        content_sections: [],
+        meta_title: "Privacy information",
+        meta_description: "How your information is handled.",
+      }],
+    } as any);
+    const result = await renderWithMeta("/pages/privacy-policy");
+    expect(result?.html).toContain("<title>Privacy information</title>");
+    expect(result?.html).toContain('content="How your information is handled."');
+  });
+
+  it("uses the per-article meta title and description", async () => {
+    query.mockResolvedValueOnce({
+      rows: [{
+        title: "Default article title",
+        excerpt: "Default excerpt",
+        cover_image_url: "",
+        meta_title: "Search result title",
+        meta_description: "Search result description.",
+      }],
+    } as any);
+    const result = await renderWithMeta("/blog/article-slug");
+    expect(result?.html).toContain("<title>Search result title</title>");
+    expect(result?.html).toContain('content="Search result description."');
+  });
+
+  it("uses configured SEO metadata for the blog index", async () => {
+    invalidateSettingsCache();
+    query.mockReset();
+    query.mockResolvedValueOnce({
+      rows: [
+        { key: "site_name", value: "Example Site" },
+        { key: "site_url", value: "https://example.com" },
+        { key: "seo_blog_title", value: "Wellness Articles" },
+        { key: "seo_blog_desc", value: "Guides for everyday wellbeing." },
+      ],
+    } as any);
+    const result = await renderWithMeta("/blog");
+    expect(result?.html).toContain("<title>Wellness Articles | Example Site</title>");
+    expect(result?.html).toContain('content="Guides for everyday wellbeing."');
+  });
+
+  it("uses per-listing SEO metadata", async () => {
+    query.mockResolvedValueOnce({
+      rows: [{
+        title: "Default listing",
+        name: "Priya",
+        age: 28,
+        services: [],
+        area: "T Nagar",
+        city: "Chennai",
+        state: "Tamil Nadu",
+        meta_title: "Listing search title",
+        meta_description: "Listing search description.",
+      }],
+    } as any);
+    const result = await renderWithMeta("/escorts/t-nagar/listing-slug");
+    expect(result?.html).toContain("<title>Listing search title</title>");
+    expect(result?.html).toContain('content="Listing search description."');
+  });
+
   it("marks private pages noindex in both metadata and response directives", async () => {
     const result = await renderWithMeta("/admin/settings");
 

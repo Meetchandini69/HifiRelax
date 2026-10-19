@@ -1,18 +1,53 @@
 import { Router } from "express";
 import { pool } from "@workspace/db";
 import { requireAuth, requireAdmin } from "./middleware.js";
+import sanitizeHtml from "sanitize-html";
 
 export const pageContentRouter = Router();
+const pageHtmlOptions: sanitizeHtml.IOptions = {
+  allowedTags: [
+    ...sanitizeHtml.defaults.allowedTags,
+    "article", "section", "main", "header", "footer", "nav", "figure", "figcaption",
+    "table", "thead", "tbody", "tr", "th", "td",
+  ],
+  allowedAttributes: {
+    a: ["href", "name", "target", "title", "rel"],
+    img: ["src", "alt", "title", "width", "height", "loading"],
+    td: ["colspan", "rowspan"],
+    th: ["colspan", "rowspan", "scope"],
+  },
+  allowedSchemes: ["http", "https", "mailto", "tel"],
+  transformTags: {
+    a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer" }),
+  },
+};
+
+function sanitizePageContent(record: Record<string, any>) {
+  const clean = (html: unknown) => sanitizeHtml(typeof html === "string" ? html : "", pageHtmlOptions);
+  return {
+    ...record,
+    content_html: clean(record.content_html),
+    content_sections: Array.isArray(record.content_sections)
+      ? record.content_sections.map((section: Record<string, unknown>) => ({
+        ...section,
+        content_html: clean(section.content_html),
+      }))
+      : [],
+  };
+}
 
 // ── Public: get content for a single page key ────────────────────────────────
 pageContentRouter.get("/", async (req, res) => {
   const { page_key } = req.query as { page_key: string };
-  if (!page_key) return res.json(null);
+  if (!page_key) {
+    res.json(null);
+    return;
+  }
   const r = await pool.query(
     `SELECT * FROM ec_page_content WHERE page_key=$1`,
     [page_key]
   );
-  res.json(r.rows[0] || null);
+  res.json(r.rows[0] ? sanitizePageContent(r.rows[0]) : null);
 });
 
 // ── Admin: list all page-content records ────────────────────────────────────
@@ -20,7 +55,7 @@ pageContentRouter.get("/admin/list", requireAuth, requireAdmin, async (_req, res
   const r = await pool.query(
     `SELECT * FROM ec_page_content ORDER BY page_type, page_name`
   );
-  res.json(r.rows);
+  res.json(r.rows.map((row: Record<string, any>) => sanitizePageContent(row)));
 });
 
 // ── Admin: get all known pages (derived from locations + fixed) w/ content status
@@ -101,6 +136,8 @@ pageContentRouter.get("/admin/all-pages", requireAuth, requireAdmin, async (_req
 // ── Admin: upsert page content ───────────────────────────────────────────────
 pageContentRouter.post("/admin/upsert", requireAuth, requireAdmin, async (req, res) => {
   const { page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json, featured_profile_ids, featured_profile_count } = req.body;
+  const metaTitle = req.body.meta_title ?? "";
+  const metaDescription = req.body.meta_description ?? "";
   if (!page_key) {
     res.status(400).json({ error: "page_key required" });
     return;
@@ -115,22 +152,36 @@ pageContentRouter.post("/admin/upsert", requireAuth, requireAdmin, async (req, r
     res.status(400).json({ error: "Custom pages need a title and a valid lowercase URL slug" });
     return;
   }
+  if (typeof metaTitle !== "string" || metaTitle.length > 300 ||
+      typeof metaDescription !== "string" || metaDescription.length > 500) {
+    res.status(400).json({ error: "Meta title must be up to 300 characters and meta description up to 500 characters" });
+    return;
+  }
+
+  const safeSections = Array.isArray(content_sections)
+    ? content_sections.map((section: Record<string, unknown>) => ({
+      ...section,
+      content_html: sanitizeHtml(typeof section?.content_html === "string" ? section.content_html : "", pageHtmlOptions),
+    }))
+    : [];
+  const safeHtml = sanitizeHtml(typeof content_html === "string" ? content_html : "", pageHtmlOptions);
 
   const r = await pool.query(
-    `INSERT INTO ec_page_content (page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json, featured_profile_ids, featured_profile_count, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())
+    `INSERT INTO ec_page_content (page_key, page_type, page_name, slug_ref, content_heading, content_html, content_sections, faq_json, featured_profile_ids, featured_profile_count, meta_title, meta_description, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
      ON CONFLICT (page_key) DO UPDATE SET
        page_type=EXCLUDED.page_type, page_name=EXCLUDED.page_name, slug_ref=EXCLUDED.slug_ref,
         content_heading=EXCLUDED.content_heading, content_html=EXCLUDED.content_html,
         content_sections=EXCLUDED.content_sections, faq_json=EXCLUDED.faq_json,
         featured_profile_ids=EXCLUDED.featured_profile_ids,
-        featured_profile_count=EXCLUDED.featured_profile_count, updated_at=NOW()
+        featured_profile_count=EXCLUDED.featured_profile_count,
+        meta_title=EXCLUDED.meta_title, meta_description=EXCLUDED.meta_description, updated_at=NOW()
      RETURNING *`,
     [page_key, page_type || "area", page_name || page_key, slug_ref || null,
-      content_heading || null, content_html || null, JSON.stringify(content_sections || []), JSON.stringify(faq_json || []),
-      JSON.stringify(featured_profile_ids || []), Number(featured_profile_count) || 0]
+      content_heading || null, safeHtml || null, JSON.stringify(safeSections), JSON.stringify(faq_json || []),
+      JSON.stringify(featured_profile_ids || []), Number(featured_profile_count) || 0, metaTitle.trim() || null, metaDescription.trim() || null]
   );
-  res.json(r.rows[0]);
+  res.json(sanitizePageContent(r.rows[0]));
 });
 
 // ── Admin: delete page content ───────────────────────────────────────────────

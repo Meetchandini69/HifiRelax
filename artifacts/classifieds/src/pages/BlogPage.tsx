@@ -13,7 +13,7 @@ export default function BlogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  useSEO({ title: "Health, Lifestyle & Relationships Blog", description: "Articles about wellbeing, everyday lifestyle and building stronger relationships.", canonicalPath: "/blog" });
+  useSEO({ title: "Health, Lifestyle & Relationships Blog", description: "Articles about wellbeing, everyday lifestyle and building stronger relationships.", canonicalPath: "/blog", seoKey: "blog" });
   useEffect(() => {
     let active = true;
     setLoading(true); setError("");

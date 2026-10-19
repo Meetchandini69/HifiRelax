@@ -117,6 +117,8 @@ CREATE TABLE IF NOT EXISTS ec_page_content (
   content_html    TEXT,
   content_sections JSONB      DEFAULT '[]',
   faq_json        JSONB        DEFAULT '[]',
+  meta_title      VARCHAR(300),
+  meta_description VARCHAR(500),
   created_at      TIMESTAMPTZ  DEFAULT NOW(),
   updated_at      TIMESTAMPTZ  DEFAULT NOW()
 );
@@ -130,12 +132,16 @@ ALTER TABLE ec_users
 ALTER TABLE ec_page_content
   ADD COLUMN IF NOT EXISTS content_sections JSONB NOT NULL DEFAULT '[]',
   ADD COLUMN IF NOT EXISTS featured_profile_ids JSONB NOT NULL DEFAULT '[]',
-  ADD COLUMN IF NOT EXISTS featured_profile_count INTEGER NOT NULL DEFAULT 0;
+  ADD COLUMN IF NOT EXISTS featured_profile_count INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS meta_title VARCHAR(300),
+  ADD COLUMN IF NOT EXISTS meta_description VARCHAR(500);
 
 ALTER TABLE ec_profiles
   ADD COLUMN IF NOT EXISTS seo_content_heading  VARCHAR(300),
   ADD COLUMN IF NOT EXISTS seo_content_html     TEXT,
-  ADD COLUMN IF NOT EXISTS seo_content_sections JSONB NOT NULL DEFAULT '[]';
+  ADD COLUMN IF NOT EXISTS seo_content_sections JSONB NOT NULL DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS meta_title            VARCHAR(300),
+  ADD COLUMN IF NOT EXISTS meta_description      VARCHAR(500);
 
 ALTER TABLE ec_profiles
   ADD COLUMN IF NOT EXISTS boost_approved_at        TIMESTAMP,
@@ -170,8 +176,12 @@ CREATE TABLE IF NOT EXISTS ec_blog_posts (
   published_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  meta_title VARCHAR(300),
+  meta_description VARCHAR(500),
   CHECK ((status = 'published' AND published_at IS NOT NULL) OR (status = 'draft' AND published_at IS NULL))
 );
 ALTER TABLE ec_blog_posts
-  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ADD COLUMN IF NOT EXISTS meta_title VARCHAR(300),
+  ADD COLUMN IF NOT EXISTS meta_description VARCHAR(500);
 CREATE INDEX IF NOT EXISTS idx_blog_published ON ec_blog_posts (published_at DESC, id DESC) WHERE status = 'published';

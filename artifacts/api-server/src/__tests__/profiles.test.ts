@@ -220,4 +220,28 @@ describe("Admin: PUT /api/classifieds/profiles/admin/:id/reject", () => {
     expect(res.body.status).toBe("rejected");
     expect(res.body.rejection_reason).toBe("Fake photos");
   });
+
+  describe("Admin: PUT /api/classifieds/profiles/admin/:id/seo-content", () => {
+    it("saves custom metadata for a listing", async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 4, meta_title: "Listing title", meta_description: "Listing description" }],
+      } as any);
+      const res = await request(app)
+        .put("/api/classifieds/profiles/admin/4/seo-content")
+        .set("Authorization", `Bearer ${adminToken()}`)
+        .send({ meta_title: "Listing title", meta_description: "Listing description" });
+      expect(res.status).toBe(200);
+      expect(mockQuery.mock.calls[0][0]).toContain("meta_title=$4, meta_description=$5");
+      expect(mockQuery.mock.calls[0][1]).toEqual([null, null, "[]", "Listing title", "Listing description", "4"]);
+    });
+
+    it("rejects metadata that exceeds search field limits", async () => {
+      const res = await request(app)
+        .put("/api/classifieds/profiles/admin/4/seo-content")
+        .set("Authorization", `Bearer ${adminToken()}`)
+        .send({ meta_title: "x".repeat(301) });
+      expect(res.status).toBe(400);
+      expect(mockQuery).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -10,9 +10,13 @@ vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => auth }));
 vi.mock("@/hooks/useSEO", () => ({ useSEO: vi.fn() }));
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
-vi.mock("@/lib/api", () => ({ api: { getBlogPosts: vi.fn(), getBlogPost: vi.fn(), adminGetBlogPosts: vi.fn(), adminCreateBlogPost: vi.fn(), adminUpdateBlogPost: vi.fn(), adminDeleteBlogPost: vi.fn() } }));
+vi.mock("@/lib/api", () => ({ api: { getBlogPosts: vi.fn(), getBlogPost: vi.fn(), adminGetBlogPosts: vi.fn(), adminCreateBlogPost: vi.fn(), adminUpdateBlogPost: vi.fn(), adminDeleteBlogPost: vi.fn(), adminGetSettings: vi.fn(), adminUpdateSettings: vi.fn() } }));
 const post = { id: 1, title: "Listening together", slug: "listening-together", excerpt: "A moment of connection", category: "Relationships" as const, content: "<script>alert('unsafe')</script><p>Listen with care.</p>", status: "published" as const, cover_image_url: "", published_at: "2026-09-23T10:00:00Z", created_at: "2026-09-23T10:00:00Z", updated_at: "2026-09-23T10:00:00Z" };
-beforeEach(() => { vi.resetAllMocks(); auth.user = { role: "admin" }; });
+beforeEach(() => {
+  vi.resetAllMocks();
+  auth.user = { role: "admin" };
+  vi.mocked(api.adminGetSettings).mockResolvedValue({});
+});
 afterEach(cleanup);
 
 describe("public blog", () => {
@@ -57,10 +61,32 @@ describe("admin blog", () => {
     await screen.findByText(/No articles yet/);
     fireEvent.click(screen.getByRole("button", { name: "New article" }));
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Everyday connection" } });
+    fireEvent.change(screen.getByLabelText("Article meta title"), { target: { value: "Connection guide" } });
+    fireEvent.change(screen.getByLabelText("Article meta description"), { target: { value: "A short guide to connection." } });
     fireEvent.click(screen.getByRole("button", { name: "HTML source" }));
     fireEvent.change(screen.getByLabelText("HTML source"), { target: { value: "<p>Make time to listen.</p>" } });
     fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
-    await waitFor(() => expect(api.adminCreateBlogPost).toHaveBeenCalledWith(expect.objectContaining({ title: "Everyday connection", slug: "everyday-connection", status: "draft", content: "<p>Make time to listen.</p>" })));
+    await waitFor(() => expect(api.adminCreateBlogPost).toHaveBeenCalledWith(expect.objectContaining({
+      title: "Everyday connection",
+      slug: "everyday-connection",
+      status: "draft",
+      content: "<p>Make time to listen.</p>",
+      meta_title: "Connection guide",
+      meta_description: "A short guide to connection.",
+    })));
+  });
+  it("saves SEO metadata for the blog index page", async () => {
+    vi.mocked(api.adminGetBlogPosts).mockResolvedValue([]);
+    vi.mocked(api.adminUpdateSettings).mockResolvedValue({ success: true });
+    render(<AdminBlogPage />);
+    await screen.findByText(/No articles yet/);
+    fireEvent.change(screen.getByLabelText("Blog page meta title"), { target: { value: "Wellness Articles" } });
+    fireEvent.change(screen.getByLabelText("Blog page meta description"), { target: { value: "Guides and articles." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save blog page metadata" }));
+    await waitFor(() => expect(api.adminUpdateSettings).toHaveBeenCalledWith({
+      seo_blog_title: "Wellness Articles",
+      seo_blog_desc: "Guides and articles.",
+    }));
   });
   it("previews formatted HTML from the source editor safely", async () => {
     vi.mocked(api.adminGetBlogPosts).mockResolvedValue([]);

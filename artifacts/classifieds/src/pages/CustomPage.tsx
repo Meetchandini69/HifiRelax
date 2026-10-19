@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import Breadcrumb from "@/components/Breadcrumb";
 import { useSEO } from "@/hooks/useSEO";
 import { api } from "@/lib/api";
 
@@ -10,6 +11,8 @@ interface CustomPageContent {
   page_name: string;
   content_heading: string | null;
   content_html: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   content_sections: { heading?: string; content_html: string; placement?: "top" | "bottom" }[];
 }
 
@@ -46,9 +49,10 @@ export default function CustomPage() {
     ? page.content_sections.map(section => section.content_html || "").join(" ")
     : page?.content_html || "";
   useSEO({
-    title,
-    description: getDescription(seoContent) || page?.content_heading || "",
+    title: page?.meta_title || title,
+    description: page?.meta_description || getDescription(seoContent) || page?.content_heading || "",
     canonicalPath: `/pages/${slug}`,
+    appendSiteName: !page?.meta_title,
   });
 
   const sections = page?.content_sections?.length
@@ -65,6 +69,7 @@ export default function CustomPage() {
           <p className="text-sm text-gray-500">Loading page…</p>
         ) : page ? (
           <article>
+            <Breadcrumb items={[{ label: page.page_name }]} />
             <h1 className="mb-6 text-3xl font-bold text-gray-900">{page.content_heading || page.page_name}</h1>
             <div className="space-y-6">
               {sections.map((section, index) => (

@@ -49,7 +49,16 @@ describe("blog access and publishing", () => {
     const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send({ ...article, status });
     expect(res.status).toBe(201);
     expect(query.mock.calls[0][0]).toContain("CASE WHEN $7::varchar='published'");
-    expect(query.mock.calls[0][1]).toEqual([article.title, article.slug, article.excerpt, article.content, article.category, "", status]);
+    expect(query.mock.calls[0][1]).toEqual([article.title, article.slug, article.excerpt, article.content, article.category, "", status, "", ""]);
+  });
+  it("persists optional article search metadata", async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 1, ...article, meta_title: "Connection guide", meta_description: "A helpful guide." }] } as any);
+    const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send({
+      ...article, meta_title: "Connection guide", meta_description: "A helpful guide.",
+    });
+    expect(res.status).toBe(201);
+    expect(query.mock.calls[0][0]).toContain("meta_title, meta_description");
+    expect(query.mock.calls[0][1]).toEqual(expect.arrayContaining(["Connection guide", "A helpful guide."]));
   });
   it("sanitizes supported article HTML and removes executable markup", async () => {
     query.mockResolvedValueOnce({ rows: [{ id: 1, ...article }] } as any);
@@ -93,9 +102,9 @@ describe("blog access and publishing", () => {
     expect(query.mock.calls[0][0]).toContain("status=$7::varchar");
     expect(query.mock.calls[0][0]).toContain("CASE WHEN $7::varchar='published'");
     expect(query.mock.calls[0][0]).toContain("ELSE NULL END");
-    expect(query.mock.calls[0][1]).toEqual(expect.arrayContaining(["draft", "1"]));
+    expect(query.mock.calls[0][1]).toEqual(expect.arrayContaining(["draft", "", "", "1"]));
   });
-  it.each([{ title: " " }, { slug: "Invalid Slug" }, { slug: "admin" }, { content: " " }, { status: "scheduled" }, { category: "unknown" }, { cover_image_url: "javascript:alert(1)" }, { excerpt: "x".repeat(501) }])("validates article input %j", async patch => {
+  it.each([{ title: " " }, { slug: "Invalid Slug" }, { slug: "admin" }, { content: " " }, { status: "scheduled" }, { category: "unknown" }, { cover_image_url: "javascript:alert(1)" }, { excerpt: "x".repeat(501) }, { meta_title: "x".repeat(301) }, { meta_description: "x".repeat(501) }])("validates article input %j", async patch => {
     const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send({ ...article, ...patch });
     expect(res.status).toBe(400);
     expect(query).not.toHaveBeenCalled();

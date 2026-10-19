@@ -88,7 +88,9 @@ async function seedBoostPlans() {
 }
 
 async function startServer() {
+  await runSchemaMigration();
   await runSqlFile("003_blog.sql", "Blog schema migration", true);
+  await runSqlFile("004_page_item_seo.sql", "Page and item SEO migration", true);
   await new Promise<void>((resolve, reject) => {
     const server = app.listen(port, (err?: Error) => {
       if (err) {
@@ -101,7 +103,6 @@ async function startServer() {
     });
     server.on("error", reject);
   });
-  await runSchemaMigration();
   await runSeedData();
   await seedBoostPlans();
 }

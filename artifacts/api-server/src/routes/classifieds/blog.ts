@@ -6,7 +6,7 @@ import { logger } from "../../lib/logger.js";
 import { randomUUID } from "crypto";
 
 export const blogRouter = Router();
-const summaryColumns = "id, title, slug, excerpt, category, cover_image_url, status, published_at, created_at, updated_at";
+const summaryColumns = "id, title, slug, excerpt, category, cover_image_url, status, published_at, created_at, updated_at, meta_title, meta_description";
 const contentSanitizer = {
   allowedTags: [
     "a", "article", "blockquote", "br", "caption", "code", "dd", "div", "dl", "dt",
@@ -49,13 +49,15 @@ function parsePost(body: unknown) {
   if (!["Health", "Lifestyle", "Relationships"].includes(category)) throw new Error("Choose a valid category");
   const status = read("status", 20, true);
   if (!["draft", "published"].includes(status)) throw new Error("Choose draft or published");
+  const metaTitle = read("meta_title", 300);
+  const metaDescription = read("meta_description", 500);
   const cover = read("cover_image_url", 2000);
   if (cover) {
     let url: URL;
     try { url = new URL(cover); } catch { throw new Error("Cover image must be an HTTP or HTTPS URL"); }
     if (!["https:", "http:"].includes(url.protocol)) throw new Error("Cover image must be an HTTP or HTTPS URL");
   }
-  return [title, slug, excerpt, content, category, cover, status];
+  return [title, slug, excerpt, content, category, cover, status, metaTitle, metaDescription];
 }
 
 blogRouter.use((_req, res, next) => {
@@ -89,8 +91,8 @@ blogRouter.post("/admin", requireAdmin, async (req, res) => {
   try { values = parsePost(req.body); } catch (error) { return res.status(400).json({ error: (error as Error).message }); }
   try {
     const result = await pool.query(
-      `INSERT INTO ec_blog_posts (title, slug, excerpt, content, category, cover_image_url, status, published_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7::varchar,CASE WHEN $7::varchar='published' THEN NOW() ELSE NULL END) RETURNING *`, values,
+      `INSERT INTO ec_blog_posts (title, slug, excerpt, content, category, cover_image_url, status, published_at, meta_title, meta_description)
+       VALUES ($1,$2,$3,$4,$5,$6,$7::varchar,CASE WHEN $7::varchar='published' THEN NOW() ELSE NULL END,$8,$9) RETURNING *`, values,
     );
     return res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -106,8 +108,9 @@ blogRouter.put("/admin/:id", requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE ec_blog_posts SET title=$1, slug=$2, excerpt=$3, content=$4, category=$5, cover_image_url=$6, status=$7::varchar,
-       published_at=CASE WHEN $7::varchar='published' THEN COALESCE(published_at, NOW()) ELSE NULL END, updated_at=NOW()
-       WHERE id=$8 RETURNING *`, [...values, req.params.id],
+       published_at=CASE WHEN $7::varchar='published' THEN COALESCE(published_at, NOW()) ELSE NULL END,
+       meta_title=$8, meta_description=$9, updated_at=NOW()
+       WHERE id=$10 RETURNING *`, [...values, req.params.id],
     );
     if (!result.rows[0]) return res.status(404).json({ error: "Article not found" });
     return res.json(result.rows[0]);

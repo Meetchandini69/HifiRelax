@@ -27,13 +27,14 @@ export default function ProfilePage() {
   }, [profileSlug]);
 
   useSEO({
-    title: profile ? `${profile.title} – ${profile.area}, ${profile.city}` : "Escort Profile",
-    description: profile
+    title: profile?.meta_title || (profile ? `${profile.title} – ${profile.area}, ${profile.city}` : "Escort Profile"),
+    description: profile?.meta_description || (profile
       ? `${profile.name}, ${profile.age ? profile.age + " yrs, " : ""}independent escort in ${profile.area}, ${profile.city}, ${profile.state}. Services: ${profile.services?.slice(0, 5).join(", ")}. Contact directly.`
-      : "",
+      : ""),
     canonicalPath: profile
       ? `/escorts/${profile.area_slug}/${profile.slug}`
       : undefined,
+    appendSiteName: !profile?.meta_title,
   });
 
   if (loading) {

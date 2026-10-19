@@ -1,0 +1,11 @@
+ALTER TABLE ec_page_content
+  ADD COLUMN IF NOT EXISTS meta_title VARCHAR(300),
+  ADD COLUMN IF NOT EXISTS meta_description VARCHAR(500);
+
+ALTER TABLE ec_profiles
+  ADD COLUMN IF NOT EXISTS meta_title VARCHAR(300),
+  ADD COLUMN IF NOT EXISTS meta_description VARCHAR(500);
+
+ALTER TABLE ec_blog_posts
+  ADD COLUMN IF NOT EXISTS meta_title VARCHAR(300),
+  ADD COLUMN IF NOT EXISTS meta_description VARCHAR(500);
