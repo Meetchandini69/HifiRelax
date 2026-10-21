@@ -15,7 +15,8 @@ const contentSanitizer = {
     "thead", "tr", "u", "ul",
   ],
   allowedAttributes: {
-    a: ["href", "name", "target", "title", "rel"],
+    "*": ["class"],
+    a: ["href", "name", "target", "title", "rel", "class"],
     img: ["src", "alt", "title", "width", "height", "loading"],
     td: ["colspan", "rowspan"],
     th: ["colspan", "rowspan", "scope"],

@@ -64,11 +64,12 @@ describe("blog access and publishing", () => {
     query.mockResolvedValueOnce({ rows: [{ id: 1, ...article }] } as any);
     const res = await request(app).post("/blog/admin").set("Authorization", `Bearer ${token("admin")}`).send({
       ...article,
-      content: '<article><h2>Useful tips</h2><p>Read <a href="javascript:alert(1)" onclick="alert(1)">this</a>.</p><script>alert(1)</script></article>',
+      content: '<article class="container"><h2>Useful tips</h2><p class="lead">Read <a href="javascript:alert(1)" onclick="alert(1)">this</a>.</p><script>alert(1)</script></article>',
     });
     expect(res.status).toBe(201);
     expect(query.mock.calls[0][1]?.[3]).toContain("<h2>Useful tips</h2>");
-    expect(query.mock.calls[0][1]?.[3]).toContain('<p>Read <a rel="noopener noreferrer">this</a>.</p>');
+    expect(query.mock.calls[0][1]?.[3]).toContain('<article class="container">');
+    expect(query.mock.calls[0][1]?.[3]).toContain('<p class="lead">Read <a rel="noopener noreferrer">this</a>.</p>');
     expect(query.mock.calls[0][1]?.[3]).not.toMatch(/script|onclick|javascript:/i);
   });
   it("rejects null bytes in article content before database save", async () => {

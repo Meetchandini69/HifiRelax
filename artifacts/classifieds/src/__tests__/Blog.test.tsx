@@ -11,7 +11,7 @@ vi.mock("@/hooks/useSEO", () => ({ useSEO: vi.fn() }));
 vi.mock("@/components/Navbar", () => ({ default: () => null }));
 vi.mock("@/components/Footer", () => ({ default: () => null }));
 vi.mock("@/lib/api", () => ({ api: { getBlogPosts: vi.fn(), getBlogPost: vi.fn(), adminGetBlogPosts: vi.fn(), adminCreateBlogPost: vi.fn(), adminUpdateBlogPost: vi.fn(), adminDeleteBlogPost: vi.fn(), adminGetSettings: vi.fn(), adminUpdateSettings: vi.fn() } }));
-const post = { id: 1, title: "Listening together", slug: "listening-together", excerpt: "A moment of connection", category: "Relationships" as const, content: "<script>alert('unsafe')</script><p>Listen with care.</p>", status: "published" as const, cover_image_url: "", published_at: "2026-09-23T10:00:00Z", created_at: "2026-09-23T10:00:00Z", updated_at: "2026-09-23T10:00:00Z" };
+const post = { id: 1, title: "Listening together", slug: "listening-together", excerpt: "A moment of connection", category: "Relationships" as const, content: '<script>alert("unsafe")</script><div class="container"><p class="lead text-primary">Listen with care.</p></div>', status: "published" as const, cover_image_url: "", published_at: "2026-09-23T10:00:00Z", created_at: "2026-09-23T10:00:00Z", updated_at: "2026-09-23T10:00:00Z" };
 beforeEach(() => {
   vi.resetAllMocks();
   auth.user = { role: "admin" };
@@ -38,7 +38,10 @@ describe("public blog", () => {
     const view = render(<BlogPostPage />);
     expect(await screen.findByRole("heading", { name: post.title })).toBeInTheDocument();
     expect(view.container.querySelector("script")).toBeNull();
-    expect(screen.getByText(/Listen with care/).tagName).toBe("P");
+    expect(screen.getByText(/Listen with care/)).toHaveClass("lead", "text-primary");
+    const bootstrapStylesheet = document.getElementById("bootstrap-blog-content-css") as HTMLLinkElement;
+    expect(bootstrapStylesheet.href).toBe("https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css");
+    expect(bootstrapStylesheet.integrity).toBe("sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB");
   });
   it("shows an unavailable state for unpublished articles", async () => {
     vi.mocked(api.getBlogPost).mockRejectedValue(new Error("Article not found"));

@@ -213,7 +213,7 @@ export default function AdminBlogPage() {
           <h2 className="mt-3 text-2xl font-bold break-words">{form.title}</h2>
           <p className="mt-3 text-gray-600 break-words">{form.excerpt}</p>
           {/^https?:\/\//i.test(form.cover_image_url) && <img src={form.cover_image_url} alt="" className="mt-4 max-h-80 w-full rounded-xl object-cover" />}
-          <div className="prose prose-gray mt-5 max-w-none break-words" dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(form.content) }} />
+          <div className="mt-5 max-w-none break-words" dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(form.content) }} />
         </article>}
       </form>}
       <label className="mb-5 block text-sm font-medium">Search articles

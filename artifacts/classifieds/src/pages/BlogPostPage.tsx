@@ -5,9 +5,11 @@ import Footer from "@/components/Footer";
 import { api } from "@/lib/api";
 import { blogDate, type BlogPost } from "@/lib/blog";
 import { useSEO } from "@/hooks/useSEO";
+import { useBootstrapCss } from "@/hooks/useBootstrapCss";
 import { sanitizeBlogHtml } from "@/lib/blogHtml";
 
 export default function BlogPostPage() {
+  useBootstrapCss();
   const { slug = "" } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function BlogPostPage() {
         <h1 className="mt-3 text-3xl font-bold leading-tight text-gray-900 break-words sm:text-4xl">{post.title}</h1>
         {post.excerpt && <p className="mt-4 text-lg leading-relaxed text-gray-600 break-words">{post.excerpt}</p>}
         {post.cover_image_url && <img src={post.cover_image_url} alt="" className="mt-6 max-h-[480px] w-full rounded-2xl object-cover" />}
-        <div className="prose prose-gray mt-8 max-w-none break-words text-base leading-8 text-gray-800" dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(post.content) }} />
+        <div className="mt-8 max-w-none break-words text-base leading-8 text-gray-800" dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(post.content) }} />
       </article>}
     </main><Footer />
   </div>;

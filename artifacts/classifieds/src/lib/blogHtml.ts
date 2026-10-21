@@ -34,6 +34,8 @@ function copySafeNode(node: Node, target: Node): void {
   }
 
   const clean = document.createElement(name);
+  const className = node.getAttribute("class");
+  if (className) clean.setAttribute("class", className);
   if (name === "a") {
     const href = node.getAttribute("href");
     const safeHref = href ? safeUrl(href) : null;
